@@ -5,6 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 
 import { colors } from "@/constants/theme";
+import { InventoryProvider } from "@/lib/inventory";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -16,7 +17,7 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <>
+    <InventoryProvider>
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
@@ -33,6 +34,6 @@ export default function RootLayout() {
         <Stack.Screen name="action/[matchId]" options={{ title: "Recall confirmed" }} />
         <Stack.Screen name="demo" options={{ title: "Demo controls", presentation: "modal" }} />
       </Stack>
-    </>
+    </InventoryProvider>
   );
 }
