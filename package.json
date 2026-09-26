@@ -1,0 +1,16 @@
+{
+  "name": "recalllens",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "mobile": "npm run start --workspace=@recalllens/mobile",
+    "api": "npm run dev --workspace=@recalllens/api",
+    "shared:build": "npm run build --workspace=@recalllens/shared"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

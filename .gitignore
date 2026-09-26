@@ -1,0 +1,16 @@
+node_modules/
+dist/
+packages/*/dist/
+.expo/
+apps/mobile/.claude/
+ios/
+android/
+*.js.map
+.env
+.env.local
+.DS_Store
+*.log
+coverage/
+.turbo/
+apps/api/data/
+*.db
