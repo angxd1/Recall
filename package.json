@@ -6,9 +6,11 @@
     "packages/*"
   ],
   "scripts": {
+    "postinstall": "npm run shared:build",
     "mobile": "npm run start --workspace=@recalllens/mobile",
     "api": "npm run dev --workspace=@recalllens/api",
-    "shared:build": "npm run build --workspace=@recalllens/shared"
+    "shared:build": "npm run build --workspace=@recalllens/shared",
+    "test:match": "npx tsx scripts/smoke-match.ts"
   },
   "engines": {
     "node": ">=20"

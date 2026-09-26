@@ -2,33 +2,41 @@
 
 Passive safety layer between products you buy and Canada's recall system.
 
+> If something you own becomes unsafe, you should know about it.
+
 **Hackathon MVP:** receipt → My Products → potential recall match → camera lot verification → official action guidance.
 
-## Monorepo
+## Architecture
 
-```
-apps/mobile   Expo Router app (dev client recommended for camera)
-apps/api      Hono API — receipt extract, Health Canada sync, matching
-packages/shared  Shared types + matching helpers
-```
+| Package | Role |
+|---------|------|
+| `apps/mobile` | Expo Router app — inventory, alerts, verify, action |
+| `apps/api` | Hono API — receipt extract, Health Canada sync, matching |
+| `packages/shared` | Types + Stage-1/Stage-2 matching helpers |
+
+Recall source: [Health Canada open JSON](https://recalls-rappels.canada.ca/sites/default/files/opendata-donneesouvertes/HCRSAMOpenData.json) with a demo seed fallback (`ABC Granola Bars`, lots `A1800–A1900`).
 
 ## Quick start
 
 ```bash
 npm install
-npm run shared:build
 npm run api          # terminal 1 — http://localhost:8787
 npm run mobile       # terminal 2 — Expo
 ```
 
-Optional: `OPENAI_API_KEY` for live receipt vision. Without it, receipt extract returns demo items.
+Optional env (see `.env.example`):
 
-Set `EXPO_PUBLIC_API_URL` if the phone cannot reach `localhost:8787` (use your machine LAN IP).
+- `OPENAI_API_KEY` — live receipt vision; without it, extract returns demo items
+- `EXPO_PUBLIC_API_URL` — set to your laptop LAN IP when testing on a physical phone
 
-## Demo script
+## Demo
 
-1. Scan receipt (or tap Load demo receipt)
-2. Inject demo recall from Demo screen
-3. Open potential match → Check Product
-4. Point camera at package lot (or enter `A1842`)
-5. See RECALL CONFIRMED + official actions
+See [DEMO.md](./DEMO.md) for the 60-second judge script and props checklist.
+
+```bash
+npm run test:match   # verifies Stage-1 + Stage-2 matching for the demo seed
+```
+
+## Out of scope (intentionally)
+
+Email receipts, pantry AR, vehicles/VIN, household sharing, news feeds, AI-generated safety advice, warranties, expiry tracking, social features.
