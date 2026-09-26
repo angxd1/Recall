@@ -1,11 +1,17 @@
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { SafetyScoreCard } from "@/components/SafetyScoreCard";
 import { colors } from "@/constants/theme";
 import { useInventory } from "@/lib/inventory";
 
 export default function HomeScreen() {
-  const { products, safetyScore, activePotentialMatches } = useInventory();
+  const { safetyScore, activePotentialMatches, matches } = useInventory();
+  const router = useRouter();
+
+  const resolveTarget =
+    activePotentialMatches[0] ??
+    matches.find((m) => m.stage === "confirmed");
 
   return (
     <View style={styles.container}>
@@ -15,10 +21,7 @@ export default function HomeScreen() {
       </Text>
 
       {activePotentialMatches.length > 0 ? (
-        <Link
-          href={`/alerts/${activePotentialMatches[0].id}`}
-          asChild
-        >
+        <Link href={`/alerts/${activePotentialMatches[0].id}`} asChild>
           <Pressable style={styles.alertBanner}>
             <Text style={styles.alertTitle}>Potential recall detected</Text>
             <Text style={styles.alertBody}>
@@ -30,19 +33,29 @@ export default function HomeScreen() {
         </Link>
       ) : null}
 
-      <View style={styles.scoreCard}>
-        <Text style={styles.scoreLabel}>Monitored</Text>
-        <Text style={styles.scoreValue}>{safetyScore.total}</Text>
-        <Text style={styles.scoreMeta}>
-          {products.length === 0
-            ? "Scan a receipt to start"
-            : `${safetyScore.clear} clear · ${safetyScore.needsVerification} need check · ${safetyScore.confirmedMatch} matched`}
-        </Text>
-      </View>
+      <SafetyScoreCard
+        score={safetyScore}
+        onResolve={
+          resolveTarget
+            ? () =>
+                router.push(
+                  resolveTarget.stage === "confirmed"
+                    ? `/action/${resolveTarget.id}`
+                    : `/alerts/${resolveTarget.id}`
+                )
+            : undefined
+        }
+      />
 
       <Link href="/receipt/scan" asChild>
         <Pressable style={styles.primaryBtn}>
           <Text style={styles.primaryBtnText}>Scan receipt</Text>
+        </Pressable>
+      </Link>
+
+      <Link href="/barcode" asChild>
+        <Pressable style={styles.secondaryBtn}>
+          <Text style={styles.secondaryBtnText}>Scan barcode</Text>
         </Pressable>
       </Link>
 
@@ -91,17 +104,6 @@ const styles = StyleSheet.create({
   },
   alertTitle: { fontSize: 16, fontWeight: "800", color: colors.accent },
   alertBody: { fontSize: 14, color: colors.ink, lineHeight: 20 },
-  scoreCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 16,
-    gap: 4,
-  },
-  scoreLabel: { fontSize: 13, fontWeight: "600", color: colors.inkMuted },
-  scoreValue: { fontSize: 36, fontWeight: "800", color: colors.brand },
-  scoreMeta: { fontSize: 14, color: colors.inkMuted },
   primaryBtn: {
     backgroundColor: colors.brand,
     paddingVertical: 16,

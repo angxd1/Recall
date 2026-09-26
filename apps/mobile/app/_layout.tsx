@@ -29,6 +29,7 @@ export default function RootLayout() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="receipt/scan" options={{ title: "Scan receipt" }} />
+        <Stack.Screen name="barcode" options={{ title: "Scan barcode" }} />
         <Stack.Screen name="alerts/[matchId]" options={{ title: "Potential match" }} />
         <Stack.Screen name="verify/[matchId]" options={{ title: "Verify package" }} />
         <Stack.Screen name="action/[matchId]" options={{ title: "Recall confirmed" }} />
