@@ -7,16 +7,19 @@ import {
   Text,
   View,
 } from "react-native";
+import { useRouter } from "expo-router";
 
 import { colors } from "@/constants/theme";
 import { api, API_BASE } from "@/lib/api";
 import { db } from "@/lib/db";
 import { useInventory } from "@/lib/inventory";
+import { syncAndMatch } from "@/lib/matching";
 
 export default function DemoScreen() {
-  const { refresh, products, recalls } = useInventory();
+  const { refresh, products, recalls, activePotentialMatches } = useInventory();
   const [busy, setBusy] = useState<string | null>(null);
   const [log, setLog] = useState<string>("");
+  const router = useRouter();
 
   const run = async (label: string, fn: () => Promise<string>) => {
     setBusy(label);
@@ -42,6 +45,9 @@ export default function DemoScreen() {
       <View style={styles.stats}>
         <Text style={styles.stat}>{products.length} products</Text>
         <Text style={styles.stat}>{recalls.length} recalls cached</Text>
+        <Text style={styles.stat}>
+          {activePotentialMatches.length} potential
+        </Text>
       </View>
 
       <Pressable
@@ -72,16 +78,43 @@ export default function DemoScreen() {
           run("inject", async () => {
             const { recall, message } = await api.injectDemoRecall();
             await db.upsertRecall(recall);
-            return `${message}: ${recall.title}`;
+            const matchResult = await syncAndMatch();
+            return `${message}. Created ${matchResult.matchesCreated} potential match(es).`;
           })
         }
       >
         {busy === "inject" ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.btnText}>Inject demo recall (ABC Granola Bars)</Text>
+          <Text style={styles.btnText}>Inject demo recall + match</Text>
         )}
       </Pressable>
+
+      <Pressable
+        style={styles.btn}
+        disabled={!!busy}
+        onPress={() =>
+          run("match", async () => {
+            const result = await syncAndMatch();
+            return `Matching (${result.source}): ${result.matchesCreated} new potential match(es)`;
+          })
+        }
+      >
+        {busy === "match" ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.btnText}>Run Stage-1 matching</Text>
+        )}
+      </Pressable>
+
+      {activePotentialMatches[0] ? (
+        <Pressable
+          style={[styles.btn, styles.warn]}
+          onPress={() => router.push(`/alerts/${activePotentialMatches[0].id}`)}
+        >
+          <Text style={styles.btnText}>Open potential alert</Text>
+        </Pressable>
+      ) : null}
 
       <Pressable
         style={[styles.btn, styles.danger]}
@@ -92,7 +125,7 @@ export default function DemoScreen() {
             try {
               await api.resetRecalls();
             } catch {
-              // ignore API reset failure
+              // ignore
             }
             return "Inventory and local matches cleared";
           })
@@ -118,8 +151,13 @@ export default function DemoScreen() {
 const styles = StyleSheet.create({
   container: { padding: 24, gap: 12, backgroundColor: colors.bg },
   title: { fontSize: 26, fontWeight: "800", color: colors.ink },
-  body: { fontSize: 14, lineHeight: 20, color: colors.inkMuted, marginBottom: 8 },
-  stats: { flexDirection: "row", gap: 16, marginBottom: 4 },
+  body: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.inkMuted,
+    marginBottom: 8,
+  },
+  stats: { flexDirection: "row", flexWrap: "wrap", gap: 16, marginBottom: 4 },
   stat: { fontSize: 13, fontWeight: "700", color: colors.brand },
   btn: {
     backgroundColor: colors.brand,
@@ -128,8 +166,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   accent: { backgroundColor: colors.accent },
+  warn: { backgroundColor: colors.warn },
   danger: { backgroundColor: colors.danger },
-  btnText: { color: "#fff", fontWeight: "700", fontSize: 15, textAlign: "center" },
+  btnText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 15,
+    textAlign: "center",
+  },
   logBox: {
     marginTop: 8,
     padding: 14,
