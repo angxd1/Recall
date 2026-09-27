@@ -1,4 +1,5 @@
 import type { Match, Product, ProductStatus, Recall } from "@recalllens/shared";
+import { barcodeKey } from "@recalllens/shared";
 
 const stores = ["products", "matches", "recalls", "meta"];
 let connection: Promise<IDBDatabase> | undefined;
@@ -129,6 +130,20 @@ async function write(names: string[], action: (transaction: IDBTransaction) => v
 }
 
 export const db = {
+  async insertBarcodeProduct(product: Product): Promise<Product | null> {
+    const key = barcodeKey(product.upc ?? "");
+    if (!key) throw new Error("Enter a valid UPC or EAN barcode.");
+    let existing: Product | null = null;
+    await write(["products"], (tx) => {
+      const store = tx.objectStore("products");
+      const reading = store.getAll();
+      reading.onsuccess = () => {
+        existing = (reading.result as Product[]).find((p) => barcodeKey(p.upc ?? "") === key) ?? null;
+        if (!existing) store.add(product);
+      };
+    });
+    return existing;
+  },
   async listProducts(): Promise<Product[]> {
     return (await all<Product>("products")).sort((a, b) => b.purchasedAt.localeCompare(a.purchasedAt));
   },

@@ -63,3 +63,16 @@ Verified two in-app browser tabs, preserving three products and the confirmed de
 The confirmed action screen still loads after reload. Storage smoke checks cover concurrent
 writes, status updates, saved match fields, rollback of a failed receipt save and reset:
 `npm run test:storage`.
+
+## Barcode lookup and duplicates (September 27)
+
+The live Open Food Facts lookup for 0034000077977 returned KitKat. In the browser,
+typed that barcode, chose Look up product, verified the editable KitKat name, and saved it.
+Entering the equivalent UPC-A 034000077977 then displayed the already-in-your-list
+message. Existing receipt products and the confirmed demo match were preserved.
+This checks the lookup/save flow through manual barcode entry, not physical camera capture.
+
+Automated checks cover invalid check digits, UPC/EAN normalization, UPC-E expansion,
+provider lookup/cache, not-found responses and provider failures. IndexedDB tests
+also verify concurrent equivalent barcode saves produce only one product and that a
+repeat scan preserves the existing recall status.

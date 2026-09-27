@@ -27,6 +27,10 @@ EXPO_PUBLIC_API_URL belongs to the Expo process; use a LAN address for physical 
 - Potential matches are not confirmed recalls. Keep lot verification deterministic,
   and show source recall instructions rather than model-generated safety advice.
 - Label fictional seed recalls visibly as demo data.
+- Barcode names come from Open Food Facts, with attribution and manual fallback.
+  Preserve check-digit validation, canonical UPC/EAN matching, request limits and
+  atomic duplicate prevention in both storage backends. Do not deduplicate by guessed
+  product names or overwrite existing recall status when a barcode is scanned again.
 - Live lot/UPC enrichment, background monitoring, notifications and package-label OCR
   are not implemented. Do not imply otherwise in documentation or UI.
 

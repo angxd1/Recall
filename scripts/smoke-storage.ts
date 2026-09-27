@@ -30,6 +30,17 @@ async function main() {
   assert.deepEqual(await db.listRecalls(), []);
   await db.insertProducts([product("after-reset")]);
   assert.equal((await db.listProducts()).length, 1);
+  const attempts = await Promise.all([
+    db.insertBarcodeProduct({ ...product("barcode-one"), upc: "036000291452" }),
+    db.insertBarcodeProduct({ ...product("barcode-two"), upc: "0036000291452" }),
+  ]);
+  assert.equal(attempts.filter((value) => value === null).length, 1, "Only one concurrent duplicate may save");
+  assert.equal((await db.listProducts()).length, 2);
+  const original = (await db.listProducts()).find((p) => p.upc)!;
+  await db.updateProductStatus(original.id, "confirmed_match");
+  const duplicate = await db.insertBarcodeProduct({ ...product("barcode-three"), upc: "036000291452" });
+  assert.equal(duplicate?.status, "confirmed_match", "Duplicate must preserve existing recall status");
+  await assert.rejects(db.insertBarcodeProduct({ ...product("invalid"), upc: "123" }));
   console.log("Storage checks passed: concurrent writes, status, match persistence, atomic rollback, reset.");
 }
 

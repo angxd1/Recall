@@ -1,5 +1,6 @@
 import * as SQLite from "expo-sqlite";
 import type { Match, Product, ProductStatus, Recall } from "@recalllens/shared";
+import { barcodeKey } from "@recalllens/shared";
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
@@ -58,6 +59,24 @@ function rowToProduct(row: Record<string, unknown>): Product {
 }
 
 export const db = {
+  async insertBarcodeProduct(product: Product): Promise<Product | null> {
+    const key = barcodeKey(product.upc ?? "");
+    if (!key) throw new Error("Enter a valid UPC or EAN barcode.");
+    const database = await getDb();
+    let existing: Product | null = null;
+    await database.withExclusiveTransactionAsync(async (tx) => {
+      const rows = await tx.getAllAsync<Record<string, unknown>>("SELECT * FROM products WHERE upc IS NOT NULL");
+      existing = rows.map(rowToProduct).find((p) => barcodeKey(p.upc ?? "") === key) ?? null;
+      if (!existing) {
+        await tx.runAsync(
+          "INSERT INTO products (id, name, brand, upc, retailer, purchased_at, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+          [product.id, product.name, product.brand ?? null, product.upc!, product.retailer ?? null,
+            product.purchasedAt, product.status, product.createdAt]
+        );
+      }
+    });
+    return existing;
+  },
   async listProducts(): Promise<Product[]> {
     const database = await getDb();
     const rows = await database.getAllAsync<Record<string, unknown>>(

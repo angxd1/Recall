@@ -106,6 +106,24 @@ The real-model smoke test injects a fictional recall into the local API store.
 See [test results and limitations](docs/receipt-flow-test.md). Contributor/agent guidance
 is in [AGENTS.md](AGENTS.md), with additional Expo guidance in apps/mobile/AGENTS.md.
 
+## Barcode lookup
+
+Barcode scans now query [Open Food Facts](https://world.openfoodfacts.org) through the API
+to fill in a food product's name and brand. No API key is required. You can also type a
+UPC/EAN and choose **Look up product**, then review or correct the name before saving.
+Missing products and network failures allow manual name entry. Coverage is community
+maintained and primarily food; non-food items may need manual names.
+
+Scanning an existing UPC shows **You already have this product in your list** and blocks
+a second entry. UPC-A and zero-prefixed EAN-13 codes count as the same product; camera
+UPC-E codes are expanded first. Duplicate prevention is by barcode, not guessed names,
+so receipt items without a barcode cannot be reliably deduplicated against scans.
+
+Product metadata is from Open Food Facts under ODbL; attribution is shown in the lookup UI.
+The API caches results and limits outbound requests. Public deployments with multiple
+API processes must coordinate the provider's per-IP rate limit. See their
+[API documentation](https://openfoodfacts.github.io/openfoodfacts-server/api/).
+
 ## Current limitations
 
 Recall sync/matching are manual demo actions; background monitoring and notifications

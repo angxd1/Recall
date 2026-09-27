@@ -52,6 +52,19 @@ For crumpled receipts, test real samples before promising reliability. Folds, gl
 text can defeat any reader; review and retake remain necessary. Current live recall ingestion
 does not populate UPC/lot identifiers, and sync/matching are manual demo actions.
 
+## Barcode product lookup
+
+`GET /products/barcode/:code` validates a UPC/EAN check digit and queries Open Food Facts
+API v3 for name and brand. It returns `{ product: { name, brand }, source: "Open Food Facts" }`,
+or `product: null` when missing. Invalid barcodes return 400; provider failures return 503.
+No model inference or API key is involved. Only the barcode is sent to the provider.
+
+Requests use an identifying User-Agent, an eight-second timeout, a bounded in-memory
+cache (one day for hits, five minutes for misses), and in-flight request deduplication.
+The per-process cap is 14 outbound requests/minute; coordinate limits across processes
+sharing an IP before scaling. Data is community maintained and food focused. Display
+Open Food Facts attribution and retain manual correction. Database license: ODbL.
+
 ## Verification
 
 ```powershell

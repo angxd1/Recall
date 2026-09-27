@@ -6,6 +6,7 @@ import { receipts } from "./routes/receipts";
 import { demo } from "./routes/demo";
 import { match } from "./routes/match";
 import { health } from "./routes/health";
+import { products } from "./routes/products";
 
 const app = new Hono();
 
@@ -18,6 +19,7 @@ app.use(
 );
 
 app.route("/health", health);
+app.route("/products", products);
 app.route("/recalls", recalls);
 app.route("/receipts", receipts);
 app.route("/demo", demo);

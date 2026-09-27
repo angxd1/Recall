@@ -45,6 +45,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  lookupBarcode: (code: string) => request<{
+    product: { name: string; brand?: string } | null;
+    source: "Open Food Facts";
+  }>(`/products/barcode/${encodeURIComponent(code)}`),
   health: () => request<{ ok: boolean }>("/health"),
 
   extractReceipt: (body: { imageBase64?: string; useDemo?: boolean }) =>
