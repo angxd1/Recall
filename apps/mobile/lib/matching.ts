@@ -48,34 +48,38 @@ export async function runPotentialMatching(
 }
 
 /** Pull the cached Health Canada notices, then compare them to owned products. */
-export async function checkRecalls(): Promise<{ lastCheckedAt: string | null }> {
+export async function checkRecalls(): Promise<{
+  lastCheckedAt: string | null;
+  newMatches: { id: string; productName: string }[];
+}> {
   let lastCheckedAt: string | null = null;
   try {
     const listed = await api.listRecalls();
     lastCheckedAt = listed.lastSyncedAt;
-    for (const recall of listed.recalls) {
-      await db.upsertRecall(recall);
-    }
+    if (listed.recalls.length > 0) await db.replaceRecalls(listed.recalls);
   } catch {
     lastCheckedAt = null;
   }
-  await syncAndMatch();
-  return { lastCheckedAt };
+  const matched = await syncAndMatch();
+  return { lastCheckedAt, newMatches: matched.newMatches };
 }
 
 /** Prefer server matching when online; fall back to local. */
 export async function syncAndMatch(): Promise<{
   matchesCreated: number;
   source: "api" | "local";
+  newMatches: { id: string; productName: string }[];
 }> {
   const products = await db.listProducts();
   let recalls = await db.listRecalls();
+  const nameFor = (productId: string) =>
+    products.find((product) => product.id === productId)?.name ?? "A saved product";
 
   try {
     const remote = await api.findPotentialMatches(products);
     const now = new Date().toISOString();
-    let created = 0;
     const existing = await db.listMatches();
+    const newMatches: { id: string; productName: string }[] = [];
 
     for (const hit of remote.matches) {
       await db.upsertRecall(hit.recall);
@@ -97,15 +101,21 @@ export async function syncAndMatch(): Promise<{
       };
       await db.upsertMatch(match);
       await db.updateProductStatus(hit.productId, "needs_verification");
-      created += 1;
+      newMatches.push({ id: match.id, productName: nameFor(hit.productId) });
     }
-    return { matchesCreated: created, source: "api" };
+    return { matchesCreated: newMatches.length, source: "api", newMatches };
   } catch {
     if (recalls.length === 0) {
-      // ensure we at least try local store
       recalls = await db.listRecalls();
     }
     const local = await runPotentialMatching(products, recalls);
-    return { matchesCreated: local.length, source: "local" };
+    return {
+      matchesCreated: local.length,
+      source: "local",
+      newMatches: local.map((match) => ({
+        id: match.id,
+        productName: nameFor(match.productId),
+      })),
+    };
   }
 }

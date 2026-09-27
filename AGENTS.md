@@ -31,8 +31,7 @@ EXPO_PUBLIC_API_URL belongs to the Expo process; use a LAN address for physical 
   Preserve check-digit validation, canonical UPC/EAN matching, request limits and
   atomic duplicate prevention in both storage backends. Do not deduplicate by guessed
   product names or overwrite existing recall status when a barcode is scanned again.
-- Live lot/UPC enrichment, background monitoring, notifications and package-label OCR
-  are not implemented. Do not imply otherwise in documentation or UI.
+- Live notices keep the 2,000 most recent rows. Lot, UPC, and model values are stored only when they appear in the notice text. The site shows a popup when a saved product newly matches while it is open. Package-label OCR is not implemented. Do not imply otherwise in documentation or UI.
 
 ## Persistence
 

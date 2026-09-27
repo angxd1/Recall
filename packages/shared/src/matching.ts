@@ -1,3 +1,4 @@
+import { barcodeKey } from "./barcode";
 import type { Product, Recall, RecallSeverity } from "./types";
 
 function normalize(text: string): string {
@@ -45,41 +46,39 @@ function hasWord(haystack: string, word: string): boolean {
   return ` ${haystack} `.includes(` ${word} `);
 }
 
+function sameUpc(left: string, right: string): boolean {
+  const a = barcodeKey(left);
+  const b = barcodeKey(right);
+  return Boolean(a && b && a === b);
+}
+
 /**
- * Stage-1 match. A hit needs a UPC, the full product name inside the notice,
- * a single distinctive product word, or the brand plus one distinctive word.
- * Shared generic words such as "frozen" and "berries" do not match.
+ * Stage-1 match. A product that already has a UPC matches only that UPC.
+ * Otherwise a hit needs the full product name inside the notice, or the brand
+ * plus one distinctive word. One shared word such as "Cheerios" does not match.
  */
 export function isPotentialProductMatch(
   product: Pick<Product, "name" | "brand" | "upc">,
   recall: Pick<Recall, "productNames" | "brands" | "identifiers" | "title">
 ): { matched: boolean; fields: string[] } {
   const fields: string[] = [];
+  const recallUpcs = recall.identifiers.upcs ?? [];
 
-  if (product.upc && recall.identifiers.upcs?.includes(product.upc)) {
-    fields.push("upc");
+  if (product.upc && barcodeKey(product.upc)) {
+    if (recallUpcs.some((upc) => sameUpc(product.upc!, upc))) fields.push("upc");
+    return { matched: fields.length > 0, fields };
   }
 
   const recallTexts = [recall.title, ...recall.productNames, ...recall.brands].map(normalize);
-  const name = normalize(product.name);
   const brand = product.brand ? normalize(product.brand) : "";
   const fullName = normalize([product.brand, product.name].filter(Boolean).join(" "));
   const nameTokens = distinctiveTokens(product.name);
-  const nameWords = tokens(name);
 
   if (
+    fullName.includes(" ") &&
     fullName.length >= 8 &&
     nameTokens.length > 0 &&
     recallTexts.some((text) => text.includes(fullName))
-  ) {
-    fields.push("name");
-  }
-
-  if (
-    nameWords.length === 1 &&
-    nameWords[0].length >= 6 &&
-    !GENERIC_WORDS.has(nameWords[0]) &&
-    recallTexts.some((text) => hasWord(text, nameWords[0]))
   ) {
     fields.push("name");
   }
@@ -152,7 +151,7 @@ export function verifyAgainstRecall(
   let verifiedUpc: string | undefined;
 
   if (observed.upc && recall.identifiers.upcs?.length) {
-    if (recall.identifiers.upcs.includes(observed.upc)) {
+    if (recall.identifiers.upcs.some((upc) => sameUpc(observed.upc!, upc))) {
       matchedFields.push("upc");
       verifiedUpc = observed.upc;
     }

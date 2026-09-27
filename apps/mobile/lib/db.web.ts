@@ -50,7 +50,7 @@ async function migrate(database: IDBDatabase): Promise<void> {
   if (marker) return;
 
   let legacyExists = false;
-  if (navigator.storage?.getDirectory) {
+  if (typeof navigator !== "undefined" && navigator.storage?.getDirectory) {
     const root = await navigator.storage.getDirectory();
     try {
       await root.getDirectoryHandle("expo-sqlite");
@@ -91,7 +91,7 @@ async function getDb(): Promise<IDBDatabase> {
     ready = (async () => {
       const database = await open();
       // Serialize the migration across tabs; later tabs never open the SQLite worker.
-      if (navigator.locks) {
+      if (typeof navigator !== "undefined" && navigator.locks) {
         await navigator.locks.request("recalllens-storage-migration", () => migrate(database));
       } else {
         await migrate(database);
@@ -168,6 +168,13 @@ export const db = {
   },
   upsertRecall(recall: Recall): Promise<void> {
     return write(["recalls"], (tx) => { tx.objectStore("recalls").put(recall); });
+  },
+  replaceRecalls(recalls: Recall[]): Promise<void> {
+    return write(["recalls"], (tx) => {
+      const store = tx.objectStore("recalls");
+      store.clear();
+      for (const recall of recalls) store.put(recall);
+    });
   },
   getRecall(id: string): Promise<Recall | null> { return get("recalls", id); },
   listRecalls(): Promise<Recall[]> { return all("recalls"); },

@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import {
   DEMO_SEED_RECALL,
+  extractRecallIdentifiers,
   mapOfficialSeverity,
   type Recall,
 } from "@recalllens/shared";
@@ -10,6 +11,7 @@ const DATA_DIR = path.join(process.cwd(), "data");
 const STORE_PATH = path.join(DATA_DIR, "recalls.json");
 const HC_URL =
   "https://recalls-rappels.canada.ca/sites/default/files/opendata-donneesouvertes/HCRSAMOpenData.json";
+const RECENT_NOTICE_LIMIT = 2000;
 
 type StoreShape = {
   recalls: Recall[];
@@ -78,6 +80,7 @@ function normalizeHcItem(item: Record<string, unknown>, index: number): Recall |
 
   const whatToDo =
     pickString(item, [
+      "What you should do",
       "What to do",
       "what_to_do",
       "Audience",
@@ -87,6 +90,10 @@ function normalizeHcItem(item: Record<string, unknown>, index: number): Recall |
   const recallClass = pickString(item, ["Recall class", "Class", "recall_class"]);
   const product = pickString(item, ["Product", "product", "Product name"]);
   const brand = pickString(item, ["Brand name", "Brand", "brand"]);
+  const publishedAt = pickString(item, ["Last updated", "Date", "date", "Published"]);
+  const identifiers = extractRecallIdentifiers(
+    [title, product, brand, hazard, whatToDo].filter(Boolean).join("\n")
+  );
 
   return {
     id: id.slice(0, 200),
@@ -97,13 +104,19 @@ function normalizeHcItem(item: Record<string, unknown>, index: number): Recall |
     hazard,
     whatToDo,
     severity: mapOfficialSeverity(recallClass, hazard),
-    identifiers: {},
+    identifiers,
     productNames: product ? [product] : [title],
     brands: brand ? [brand] : [],
-    publishedAt: pickString(item, ["Date", "date", "Published"]) || undefined,
+    publishedAt: publishedAt || undefined,
     isSeed: false,
     rawOfficialText: hazard,
   };
+}
+
+function publishedTime(row: Record<string, unknown>): number {
+  const raw = pickString(row, ["Last updated", "Date", "date", "Published"]);
+  const time = Date.parse(raw);
+  return Number.isNaN(time) ? 0 : time;
 }
 
 export const recallStore = {
@@ -163,8 +176,8 @@ export const recallStore = {
         }
       }
 
-      // Keep recent-ish slice for hackathon performance
-      const slice = rows.slice(0, 400);
+      rows.sort((a, b) => publishedTime(b) - publishedTime(a));
+      const slice = rows.slice(0, RECENT_NOTICE_LIMIT);
       const normalized = slice
         .map((row, i) => normalizeHcItem(row, i))
         .filter((r): r is Recall => r !== null);
@@ -182,7 +195,7 @@ export const recallStore = {
       // Also write a cache snapshot for offline fallback
       await fs.writeFile(
         path.join(DATA_DIR, "hc-cache.json"),
-        JSON.stringify({ cachedAt: store.lastSyncedAt, recalls: normalized.slice(0, 100) })
+        JSON.stringify({ cachedAt: store.lastSyncedAt, recalls: normalized })
       );
 
       return {

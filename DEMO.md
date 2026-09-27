@@ -27,9 +27,7 @@
 5. **Action** — **DEMO RECALL CONFIRMED** → fictional hazard and guidance → lot match.
    The demo is labelled fictional and has no official notice link.
 
-Try A2000 first to demonstrate an unaffected lot. Real Health Canada sync does not yet
-provide the lot/UPC identifiers used in this demo. Matching is manually triggered;
-background monitoring and notifications are not implemented.
+Try A2000 first to demonstrate an unaffected lot. A live notice supplies a lot or UPC only when that value is written in the open-data text, so this demo still uses the fictional recall. The site checks on open and shows a popup when a saved product newly matches. Package-label OCR is not implemented.
 
 ## Reset between runs
 

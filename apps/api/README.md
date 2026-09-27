@@ -49,8 +49,7 @@ quotas/access controls before sharing a public endpoint: the per-process concurr
 not a per-user quota. The API's recall JSON files need persistent storage.
 
 For crumpled receipts, test real samples before promising reliability. Folds, glare and missing
-text can defeat any reader; review and retake remain necessary. Current live recall ingestion
-does not populate UPC/lot identifiers, and sync/matching are manual demo actions.
+text can defeat any reader; review and retake remain necessary. Sync keeps the 2,000 most recent notices and reads lot, UPC, and model values only when the notice text includes them. The website checks on open and shows a popup for a new match.
 
 ## Barcode product lookup
 

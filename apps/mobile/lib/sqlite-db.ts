@@ -131,6 +131,19 @@ export const db = {
     );
   },
 
+  async replaceRecalls(recalls: Recall[]): Promise<void> {
+    const database = await getDb();
+    await database.withTransactionAsync(async () => {
+      await database.runAsync("DELETE FROM recalls");
+      for (const recall of recalls) {
+        await database.runAsync(
+          "INSERT OR REPLACE INTO recalls (id, json) VALUES (?, ?)",
+          [recall.id, JSON.stringify(recall)]
+        );
+      }
+    });
+  },
+
   async getRecall(id: string): Promise<Recall | null> {
     const database = await getDb();
     const row = await database.getFirstAsync<{ json: string }>(

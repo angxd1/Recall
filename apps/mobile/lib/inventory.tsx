@@ -14,6 +14,8 @@ import { AppState, Button, Text, View } from "react-native";
 
 import { db } from "@/lib/db";
 import { checkRecalls } from "@/lib/matching";
+import { RecallPopup } from "@/components/RecallPopup";
+import { useRouter } from "expo-router";
 
 type InventoryState = {
   products: Product[];
@@ -27,6 +29,25 @@ type InventoryState = {
   activePotentialMatches: Match[];
 };
 
+const POPUP_KEY = "wecanrecall-new-matches";
+
+function readPopup(): { id: string; productName: string }[] {
+  if (typeof sessionStorage === "undefined") return [];
+  try {
+    const raw = sessionStorage.getItem(POPUP_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePopup(matches: { id: string; productName: string }[]) {
+  if (typeof sessionStorage === "undefined") return;
+  if (matches.length === 0) sessionStorage.removeItem(POPUP_KEY);
+  else sessionStorage.setItem(POPUP_KEY, JSON.stringify(matches));
+}
+
 const InventoryContext = createContext<InventoryState | null>(null);
 
 export function InventoryProvider({ children }: { children: ReactNode }) {
@@ -36,7 +57,9 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [lastCheckedAt, setLastCheckedAt] = useState<string | null>(null);
   const [storageError, setStorageError] = useState<string | null>(null);
+  const [freshMatches, setFreshMatches] = useState<{ id: string; productName: string }[]>(readPopup);
   const monitoring = useRef(false);
+  const router = useRouter();
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -63,6 +86,10 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     try {
       const result = await checkRecalls();
       setLastCheckedAt(result.lastCheckedAt);
+      if (result.newMatches.length > 0) {
+        writePopup(result.newMatches);
+        setFreshMatches(result.newMatches);
+      }
       await refresh();
     } finally {
       monitoring.current = false;
@@ -84,6 +111,14 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
         window.removeEventListener("focus", onFocus);
       }
     };
+  }, [monitor]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      void monitor();
+    }, 10 * 60 * 1000);
+    return () => clearInterval(timer);
   }, [monitor]);
 
   const safetyScore = useMemo(() => computeSafetyScore(products), [products]);
@@ -117,6 +152,22 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
           <Button title="Try again" onPress={() => { void refresh(); }} />
         </View>
       ) : children}
+      {freshMatches[0] ? (
+        <RecallPopup
+          productName={freshMatches[0].productName}
+          extraCount={freshMatches.length - 1}
+          onOpen={() => {
+            const id = freshMatches[0].id;
+            writePopup([]);
+            setFreshMatches([]);
+            router.push(`/alerts/${id}`);
+          }}
+          onDismiss={() => {
+            writePopup([]);
+            setFreshMatches([]);
+          }}
+        />
+      ) : null}
     </InventoryContext.Provider>
   );
 }

@@ -49,7 +49,7 @@ the same extraction/save pipeline.
 
 The test inventory contains three synthetic products and one fictional confirmed recall.
 Severely folded/obscured receipts still require representative testing and human review.
-Matching/sync are currently manual demo actions, not background monitoring or push notifications.
+Matching/sync run when the site opens. A popup appears for a newly matched product. Package-label OCR is not implemented, and a closed browser is not notified.
 
 ## Browser storage regression
 

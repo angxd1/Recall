@@ -126,11 +126,7 @@ API processes must coordinate the provider's per-IP rate limit. See their
 
 ## Current limitations
 
-Recall sync/matching are manual demo actions; background monitoring and notifications
-are not implemented. Live recall ingestion does not yet populate lot/UPC identifiers,
-so lot confirmation is demonstrated with the labelled fictional recall. Package lot
-entry is manual; package-label OCR is not implemented. Receipt recognition can fail
-on folded or obscured text; users must review results.
+The site checks the newest 2,000 Canadian notices when it opens, and again while the tab stays open. A popup appears when a saved product newly matches. A closed browser is not notified. Lot, UPC, and model values are stored only when the open-data notice writes them in its text, so many live recalls still cannot confirm an exact package. Package lot entry is manual; package-label OCR is not implemented. Receipt recognition can fail on folded or obscured text; users must review results.
 
 Self-hosting avoids per-token fees but still requires inference hardware and hosting
 resources. A static web host alone cannot serve Qwen. See the API README for HTTPS,
