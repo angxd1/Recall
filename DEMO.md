@@ -4,14 +4,14 @@
 
 - [ ] Included synthetic receipt at `scripts/fixtures/receipt.png` (3 products including **ABC Granola Bars**), or a printed copy
 - [ ] Physical package (or printed label) showing **LOT A1842** (within A1800–A1900)
-- [ ] Phone with Expo / development build of RecallLens
+- [ ] Phone with Expo / development build of WeCanRecall
 - [ ] API running on laptop (`npm run api`) reachable from phone (`EXPO_PUBLIC_API_URL` if needed)
 - [ ] Ollama serving with `qwen2.5vl:3b` downloaded for real receipt extraction
 - [ ] Optional: Health Canada sync once before the demo for “live data” talking point
 
 ## Judge walkthrough
 
-1. **Receipt** — Open RecallLens → Scan receipt → upload the fixture or photograph the prepared receipt
+1. **Receipt** — Open WeCanRecall → Scan receipt → upload the fixture or photograph the prepared receipt
    (or tap **Use demo receipt** if camera/OCR is flaky)  
    → Review/edit the identified products (3 for the fixture) → Add to My Products
 

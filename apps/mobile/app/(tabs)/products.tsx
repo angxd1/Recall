@@ -1,11 +1,14 @@
 import { useCallback } from "react";
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Product } from "@recalllens/shared";
 
 import { ProductRow } from "@/components/ProductRow";
-import { colors } from "@/constants/theme";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { colors, layout } from "@/constants/theme";
+import { text } from "@/constants/type";
 import { useInventory } from "@/lib/inventory";
 
 export default function ProductsScreen() {
@@ -37,14 +40,19 @@ export default function ProductsScreen() {
       <FlatList
         data={products}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={[styles.list, { paddingTop: insets.top + 12 }]}
+        style={styles.list}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 28, paddingBottom: insets.bottom + 96 }]}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={() => { void monitor(); }} />
+          <RefreshControl
+            refreshing={loading}
+            tintColor={colors.brand}
+            onRefresh={() => { void monitor(); }}
+          />
         }
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.title}>My Products</Text>
-            <Text style={styles.subtitle}>
+            <Text style={text.title}>My Products</Text>
+            <Text style={text.muted}>
               {products.length === 0
                 ? "Add what you buy so a new recall can be checked against it."
                 : `${products.length} item${products.length === 1 ? "" : "s"} being watched.`}
@@ -52,15 +60,13 @@ export default function ProductsScreen() {
           </View>
         }
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyTitle}>Nothing monitored yet</Text>
-            <Text style={styles.emptyBody}>
+          <Card>
+            <Text style={text.product}>Nothing monitored yet</Text>
+            <Text style={text.body}>
               Scan a grocery receipt and the products will be watched for Canadian recalls.
             </Text>
-            <Pressable style={styles.scanBtn} onPress={() => router.push("/receipt/scan")}>
-              <Text style={styles.scanBtnText}>Scan receipt</Text>
-            </Pressable>
-          </View>
+            <Button label="Scan receipt" onPress={() => router.push("/receipt/scan")} />
+          </Card>
         }
         renderItem={({ item }) => (
           <ProductRow product={item} onPress={() => onPressProduct(item)} />
@@ -72,28 +78,8 @@ export default function ProductsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  list: { padding: 20, paddingBottom: 40 },
-  header: { marginBottom: 18, gap: 8, paddingTop: 12 },
-  title: { fontSize: 32, fontWeight: "800", color: colors.ink },
-  subtitle: { fontSize: 16, lineHeight: 22, color: colors.inkMuted },
-  empty: {
-    marginTop: 12,
-    padding: 22,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: 12,
-  },
-  emptyTitle: { fontSize: 20, fontWeight: "800", color: colors.ink },
-  emptyBody: { fontSize: 16, lineHeight: 22, color: colors.inkMuted },
-  scanBtn: {
-    marginTop: 4,
-    backgroundColor: colors.brand,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  scanBtnText: { color: "#fff", fontWeight: "700", fontSize: 17 },
+  container: { flex: 1, backgroundColor: colors.bg, alignItems: "center" },
+  list: { width: "100%", maxWidth: layout.maxWidth },
+  content: { paddingHorizontal: 24, paddingBottom: 40 },
+  header: { marginBottom: 20, gap: 8 },
 });

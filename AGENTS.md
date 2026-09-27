@@ -2,7 +2,7 @@
 
 ## Layout and setup
 
-RecallLens is an npm-workspaces TypeScript MVP. Use npm from the repository root,
+WeCanRecall is an npm-workspaces TypeScript MVP. Use npm from the repository root,
 Node 24 LTS (tested with 24.14.0), and commit package-lock.json when dependencies change.
 Run npm ci; postinstall builds packages/shared. Rebuild shared after editing its source.
 

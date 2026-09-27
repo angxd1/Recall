@@ -1,17 +1,49 @@
 export const colors = {
-  bg: "#F4F7F5",
-  surface: "#FFFFFF",
-  ink: "#10241C",
-  inkMuted: "#5A6F66",
-  brand: "#0B3D2E",
-  brandSoft: "#1A5C45",
-  accent: "#C45C26",
-  clear: "#1F7A4C",
-  warn: "#C47A00",
-  danger: "#B42318",
+  bg: "#F6F3EC",
+  surface: "#FFFCF7",
+  ink: "#1C1915",
+  inkMuted: "#5C564C",
+  brand: "#143D32",
+  brandSoft: "#1F5A48",
+  accent: "#8A5A00",
+  clear: "#143D32",
+  warn: "#8A5A00",
+  danger: "#9B2C2C",
   info: "#1B4F72",
-  border: "#D5E0DB",
-  banner: "#FFF4E5",
+  border: "#E4DDD0",
+  banner: "#F8EFD9",
+  onBrand: "#F6F3EC",
+  clearSoft: "#E4EFE8",
+  warnSoft: "#F8EFD9",
+  dangerSoft: "#F8E6E4",
+  track: "#E7E1D6",
+};
+
+export const fonts = {
+  serif: "Fraunces_600SemiBold",
+  serifBold: "Fraunces_700Bold",
+  sans: "SourceSans3_400Regular",
+  sansMedium: "SourceSans3_600SemiBold",
+  sansBold: "SourceSans3_700Bold",
+};
+
+export const space = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+};
+
+export const radius = {
+  card: 20,
+  button: 14,
+  input: 12,
+  chip: 8,
+};
+
+export const layout = {
+  maxWidth: 560,
 };
 
 export const severityLabel: Record<string, string> = {

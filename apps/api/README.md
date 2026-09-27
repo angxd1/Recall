@@ -1,4 +1,4 @@
-# RecallLens API
+# WeCanRecall API
 
 Hono server for receipt extraction, Health Canada recall sync, and matching.
 

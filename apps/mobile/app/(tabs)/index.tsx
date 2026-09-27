@@ -1,9 +1,12 @@
-import { Link, useRouter } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { Pressable, Text } from "react-native";
 
 import { SafetyScoreCard } from "@/components/SafetyScoreCard";
-import { colors } from "@/constants/theme";
+import { Wordmark } from "@/components/Wordmark";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Screen } from "@/components/ui/Screen";
+import { text } from "@/constants/type";
 import { useInventory } from "@/lib/inventory";
 
 function formatChecked(iso: string | null) {
@@ -18,10 +21,19 @@ function formatChecked(iso: string | null) {
   })}`;
 }
 
+function headlineFor(confirmed: number, needsCheck: number) {
+  if (confirmed > 0) {
+    return confirmed === 1 ? "Recall match" : `${confirmed} recall matches`;
+  }
+  if (needsCheck > 0) {
+    return `Check ${needsCheck} product${needsCheck === 1 ? "" : "s"}`;
+  }
+  return "All clear";
+}
+
 export default function HomeScreen() {
   const { safetyScore, activePotentialMatches, matches, lastCheckedAt } = useInventory();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
 
   const resolveTarget =
     activePotentialMatches[0] ??
@@ -29,26 +41,27 @@ export default function HomeScreen() {
   const alertCount = activePotentialMatches.length;
 
   return (
-    <ScrollView
-      contentContainerStyle={[styles.container, { paddingTop: insets.top + 28 }]}
-    >
-      <Text style={styles.brand}>RecallLens</Text>
-      <Text style={styles.status}>
-        {safetyScore.total} product{safetyScore.total === 1 ? "" : "s"} monitored
-        {"\n"}
-        {formatChecked(lastCheckedAt)}
+    <Screen topInset>
+      <Wordmark />
+      <Text style={text.hero}>
+        {headlineFor(safetyScore.confirmedMatch, safetyScore.needsVerification)}
       </Text>
+      <Text style={text.muted}>{formatChecked(lastCheckedAt)}</Text>
 
       {alertCount > 0 ? (
-        <Link href={`/alerts/${activePotentialMatches[0].id}`} asChild>
-          <Pressable style={styles.alertBanner}>
-            <Text style={styles.alertTitle}>Check a product</Text>
-            <Text style={styles.alertBody}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push(`/alerts/${activePotentialMatches[0].id}`)}
+          style={({ pressed }) => pressed && { opacity: 0.92 }}
+        >
+          <Card tone="warn">
+            <Text style={text.product}>Check a product</Text>
+            <Text style={text.body}>
               {alertCount} item{alertCount === 1 ? "" : "s"} may match a Canadian recall.
               Open the package before treating it as affected.
             </Text>
-          </Pressable>
-        </Link>
+          </Card>
+        </Pressable>
       ) : null}
 
       <SafetyScoreCard
@@ -65,64 +78,12 @@ export default function HomeScreen() {
         }
       />
 
-      <Link href="/receipt/scan" asChild>
-        <Pressable style={styles.primaryBtn}>
-          <Text style={styles.primaryBtnText}>Scan receipt</Text>
-        </Pressable>
-      </Link>
-
-      <Link href="/barcode" asChild>
-        <Pressable style={styles.secondaryBtn}>
-          <Text style={styles.secondaryBtnText}>Add a barcode</Text>
-        </Pressable>
-      </Link>
-    </ScrollView>
+      <Button label="Scan receipt" onPress={() => router.push("/receipt/scan")} />
+      <Button
+        label="Add a barcode"
+        variant="quiet"
+        onPress={() => router.push("/barcode")}
+      />
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingBottom: 32,
-    backgroundColor: colors.bg,
-    gap: 16,
-  },
-  brand: {
-    fontSize: 36,
-    fontWeight: "800",
-    color: colors.brand,
-    letterSpacing: -0.8,
-  },
-  status: {
-    fontSize: 17,
-    lineHeight: 24,
-    color: colors.inkMuted,
-  },
-  alertBanner: {
-    backgroundColor: colors.banner,
-    borderColor: "#F0C989",
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 18,
-    gap: 6,
-  },
-  alertTitle: { fontSize: 20, fontWeight: "800", color: colors.accent },
-  alertBody: { fontSize: 16, color: colors.ink, lineHeight: 22 },
-  primaryBtn: {
-    backgroundColor: colors.brand,
-    paddingVertical: 18,
-    borderRadius: 14,
-    alignItems: "center",
-  },
-  primaryBtnText: { color: "#fff", fontSize: 18, fontWeight: "700" },
-  secondaryBtn: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: "center",
-  },
-  secondaryBtnText: { color: colors.ink, fontSize: 16, fontWeight: "600" },
-});

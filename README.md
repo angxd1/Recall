@@ -1,4 +1,4 @@
-# RecallLens
+# WeCanRecall
 
 Track purchased products and check them against Canada's recall system.
 

@@ -42,6 +42,6 @@ watchRecalls();
 const recallTimer = setInterval(watchRecalls, SIX_HOURS_MS);
 recallTimer.unref?.();
 
-console.log(`RecallLens API listening on http://localhost:${port}`);
+console.log(`WeCanRecall API listening on http://localhost:${port}`);
 
 serve({ fetch: app.fetch, port });

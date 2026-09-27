@@ -1,16 +1,13 @@
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import type { Match, Product, Recall } from "@recalllens/shared";
 
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Screen } from "@/components/ui/Screen";
 import { colors, severityLabel } from "@/constants/theme";
+import { text } from "@/constants/type";
 import { db } from "@/lib/db";
 import { useInventory } from "@/lib/inventory";
 
@@ -43,7 +40,7 @@ export default function AlertDetailScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg }}>
         <ActivityIndicator color={colors.brand} />
       </View>
     );
@@ -51,9 +48,9 @@ export default function AlertDetailScreen() {
 
   if (!match || !product || !recall) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.body}>Match not found.</Text>
-      </View>
+      <Screen>
+        <Text style={text.body}>Match not found.</Text>
+      </Screen>
     );
   }
 
@@ -63,96 +60,34 @@ export default function AlertDetailScreen() {
   });
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.headline}>Check this package</Text>
-      <Text style={styles.lead}>
-        {product.name} may be part of a recall. Purchased {purchased}. This is not a confirmation until the package is checked.
+    <Screen
+      footer={
+        <>
+          <Button label="Check product" onPress={() => router.push(`/verify/${match.id}`)} />
+          <Button
+            label="I no longer have this product"
+            variant="text"
+            onPress={async () => {
+              const now = new Date().toISOString();
+              await db.upsertMatch({ ...match, stage: "cleared", updatedAt: now });
+              await db.updateProductStatus(product.id, "clear");
+              await refresh();
+              router.back();
+            }}
+          />
+        </>
+      }
+    >
+      <Text style={text.title}>Check this package</Text>
+      <Text style={text.product}>{product.name}</Text>
+      <Text style={text.body}>
+        Purchased {purchased}. This is not a confirmation until the package is checked.
       </Text>
-
-      <View style={styles.card}>
-        <Text style={styles.sectionLabel}>Official reason</Text>
-        <Text style={styles.body}>{recall.hazard}</Text>
-        <Text style={styles.meta}>{severityLabel[recall.severity]}</Text>
-      </View>
-
-      <Pressable
-        style={styles.primaryBtn}
-        onPress={() => router.push(`/verify/${match.id}`)}
-      >
-        <Text style={styles.primaryBtnText}>Check Product</Text>
-      </Pressable>
-
-      <Pressable
-        style={styles.secondaryBtn}
-        onPress={async () => {
-          const now = new Date().toISOString();
-          await db.upsertMatch({ ...match, stage: "cleared", updatedAt: now });
-          await db.updateProductStatus(product.id, "clear");
-          await refresh();
-          router.back();
-        }}
-      >
-        <Text style={styles.secondaryBtnText}>I no longer have this product</Text>
-      </Pressable>
-    </ScrollView>
+      <Card>
+        <Text style={text.label}>Official reason</Text>
+        <Text style={text.body}>{recall.hazard}</Text>
+        <Text style={text.muted}>{severityLabel[recall.severity]}</Text>
+      </Card>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.bg,
-  },
-  container: { padding: 20, gap: 14, backgroundColor: colors.bg },
-  banner: {
-    backgroundColor: colors.banner,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#F0C989",
-    padding: 16,
-    gap: 6,
-  },
-  bannerEyebrow: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: colors.accent,
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
-  },
-  headline: { fontSize: 32, fontWeight: "800", color: colors.ink, lineHeight: 38 },
-  lead: { fontSize: 17, lineHeight: 24, color: colors.ink },
-  bannerTitle: { fontSize: 20, fontWeight: "800", color: colors.ink, lineHeight: 26 },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 16,
-    gap: 6,
-  },
-  productName: { fontSize: 20, fontWeight: "800", color: colors.ink },
-  recallTitle: { fontSize: 16, fontWeight: "700", color: colors.ink, lineHeight: 22 },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: colors.inkMuted,
-    textTransform: "uppercase",
-  },
-  meta: { fontSize: 14, color: colors.inkMuted },
-  body: { fontSize: 15, lineHeight: 21, color: colors.ink },
-  note: { fontSize: 14, lineHeight: 20, color: colors.inkMuted },
-  primaryBtn: {
-    backgroundColor: colors.accent,
-    paddingVertical: 18,
-    borderRadius: 14,
-    alignItems: "center",
-  },
-  primaryBtnText: { color: "#fff", fontWeight: "800", fontSize: 18 },
-  secondaryBtn: {
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  secondaryBtnText: { color: colors.inkMuted, fontWeight: "600", fontSize: 14 },
-});

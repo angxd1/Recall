@@ -2,7 +2,6 @@ import { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -13,7 +12,10 @@ import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import type { Product, ReceiptLineItem } from "@recalllens/shared";
 
-import { colors } from "@/constants/theme";
+import { Button } from "@/components/ui/Button";
+import { Screen } from "@/components/ui/Screen";
+import { colors, fonts, radius } from "@/constants/theme";
+import { text } from "@/constants/type";
 import { api } from "@/lib/api";
 import { db, newId } from "@/lib/db";
 import { useInventory } from "@/lib/inventory";
@@ -71,7 +73,6 @@ export default function ReceiptScanScreen() {
       const result = await api.extractReceipt({ useDemo: true });
       applyExtract(result);
     } catch (e) {
-      // Offline-friendly local fallback
       const { DEMO_RECEIPT_ITEMS } = await import("@recalllens/shared");
       applyExtract({
         retailer: "Walmart",
@@ -135,33 +136,51 @@ export default function ReceiptScanScreen() {
 
   if (!permission?.granted && phase === "camera") {
     return (
-      <View style={styles.center}>
-        <Text style={styles.title}>Add a receipt</Text>
-        <Text style={styles.body}>
-          RecallLens photographs receipts to build your product inventory.
+      <Screen>
+        <Text style={text.title}>Add a receipt</Text>
+        <Text style={text.body}>
+          WeCanRecall photographs receipts to build your product inventory.
         </Text>
-        <Pressable style={styles.primaryBtn} onPress={requestPermission}>
-          <Text style={styles.primaryBtnText}>Allow camera</Text>
-        </Pressable>
-        <Pressable style={styles.primaryBtn} onPress={uploadReceipt} disabled={busy}>
-          <Text style={styles.primaryBtnText}>{busy ? "Reading receipt…" : "Upload receipt photo"}</Text>
-        </Pressable>
-        {busy ? <ActivityIndicator color={colors.brand} /> : null}
+        <Button label="Allow camera" onPress={requestPermission} />
+        <Button
+          label={busy ? "Reading receipt…" : "Upload receipt photo"}
+          variant="quiet"
+          busy={busy}
+          onPress={uploadReceipt}
+        />
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Pressable style={styles.secondaryBtn} onPress={loadDemo} disabled={busy}>
-          <Text style={styles.secondaryBtnText}>Use demo receipt instead</Text>
-        </Pressable>
-      </View>
+        <Button label="Use demo receipt instead" variant="text" disabled={busy} onPress={loadDemo} />
+      </Screen>
     );
   }
 
   if (phase === "review" || phase === "saving") {
     return (
-      <ScrollView contentContainerStyle={styles.review}>
-        <Text style={styles.title}>
+      <Screen
+        footer={
+          <>
+            <Button
+              label="Add to My Products"
+              busy={phase === "saving"}
+              disabled={items.some((item) => !item.name.trim())}
+              onPress={saveProducts}
+            />
+            <Button
+              label="Retake"
+              variant="text"
+              disabled={phase === "saving"}
+              onPress={() => {
+                setPhase("camera");
+                setError(null);
+              }}
+            />
+          </>
+        }
+      >
+        <Text style={text.title}>
           {items.length} product{items.length === 1 ? "" : "s"} identified
         </Text>
-        <Text style={styles.body}>
+        <Text style={text.body}>
           {retailer ? `${retailer} · ` : ""}
           Check and correct product names before adding them to My Products.
         </Text>
@@ -169,47 +188,24 @@ export default function ReceiptScanScreen() {
         <View style={styles.itemList}>
           {items.map((item, idx) => (
             <View key={idx} style={styles.itemRow}>
-              <View style={{ flex: 1 }}>
-                <TextInput
-                  accessibilityLabel={`Product ${idx + 1} name`}
-                  style={styles.itemName}
-                  value={item.name}
-                  editable={phase !== "saving"}
-                  onChangeText={(name) => setItems((current) => current.map((entry, i) =>
-                    i === idx ? { ...entry, name } : entry
-                  ))}
-                />
-                {item.brand ? (
-                  <Text style={styles.itemBrand}>{item.brand}</Text>
-                ) : null}
-              </View>
+              <Text style={text.label}>Name</Text>
+              <TextInput
+                accessibilityLabel={`Product ${idx + 1} name`}
+                style={styles.itemName}
+                value={item.name}
+                editable={phase !== "saving"}
+                onChangeText={(name) => setItems((current) => current.map((entry, i) =>
+                  i === idx ? { ...entry, name } : entry
+                ))}
+              />
+              {item.brand ? <Text style={text.muted}>{item.brand}</Text> : null}
               {item.price != null ? (
                 <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
               ) : null}
             </View>
           ))}
         </View>
-        <Pressable
-          style={styles.primaryBtn}
-          onPress={saveProducts}
-          disabled={phase === "saving" || items.some((item) => !item.name.trim())}
-        >
-          {phase === "saving" ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.primaryBtnText}>Add to My Products</Text>
-          )}
-        </Pressable>
-        <Pressable
-          style={styles.secondaryBtn}
-          onPress={() => {
-            setPhase("camera");
-            setError(null);
-          }}
-        >
-          <Text style={styles.secondaryBtnText}>Retake</Text>
-        </Pressable>
-      </ScrollView>
+      </Screen>
     );
   }
 
@@ -222,7 +218,9 @@ export default function ReceiptScanScreen() {
         </Text>
         {error ? <Text style={styles.errorLight}>{error}</Text> : null}
         <Pressable
-          style={styles.shutter}
+          accessibilityRole="button"
+          accessibilityLabel="Capture receipt"
+          style={({ pressed }) => [styles.shutter, pressed && { opacity: 0.92 }]}
           onPress={captureAndExtract}
           disabled={busy}
         >
@@ -232,10 +230,10 @@ export default function ReceiptScanScreen() {
             <View style={styles.shutterInner} />
           )}
         </Pressable>
-        <Pressable style={styles.demoLink} onPress={loadDemo} disabled={busy}>
+        <Pressable accessibilityRole="button" style={styles.demoLink} onPress={loadDemo} disabled={busy}>
           <Text style={styles.demoLinkText}>Use demo receipt</Text>
         </Pressable>
-        <Pressable style={styles.demoLink} onPress={uploadReceipt} disabled={busy}>
+        <Pressable accessibilityRole="button" style={styles.demoLink} onPress={uploadReceipt} disabled={busy}>
           <Text style={styles.demoLinkText}>Upload receipt photo</Text>
         </Pressable>
       </View>
@@ -247,9 +245,8 @@ const styles = StyleSheet.create({
   center: {
     flex: 1,
     justifyContent: "center",
-    padding: 24,
+    alignItems: "center",
     backgroundColor: colors.bg,
-    gap: 12,
   },
   cameraWrap: { flex: 1, backgroundColor: "#000" },
   camera: { flex: 1 },
@@ -262,20 +259,21 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     alignItems: "center",
     gap: 12,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: "rgba(28,25,21,0.55)",
   },
   overlayHint: {
-    color: "#fff",
+    fontFamily: fonts.sans,
+    color: colors.onBrand,
     textAlign: "center",
-    fontSize: 15,
-    lineHeight: 21,
+    fontSize: 16,
+    lineHeight: 24,
   },
   shutter: {
     width: 74,
     height: 74,
     borderRadius: 37,
     borderWidth: 4,
-    borderColor: "#fff",
+    borderColor: colors.onBrand,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255,255,255,0.2)",
@@ -284,43 +282,32 @@ const styles = StyleSheet.create({
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: "#fff",
+    backgroundColor: colors.onBrand,
   },
-  demoLink: { paddingVertical: 6 },
-  demoLinkText: { color: "#fff", fontWeight: "700", fontSize: 15 },
-  review: { padding: 24, gap: 12, backgroundColor: colors.bg },
-  title: { fontSize: 26, fontWeight: "800", color: colors.ink },
-  body: { fontSize: 15, lineHeight: 21, color: colors.inkMuted },
-  error: { color: colors.danger, fontSize: 13 },
-  errorLight: { color: "#FFD0D0", fontSize: 13, textAlign: "center" },
-  itemList: { gap: 8, marginVertical: 8 },
+  demoLink: { minHeight: 44, justifyContent: "center", paddingHorizontal: 12 },
+  demoLinkText: { fontFamily: fonts.sansBold, color: colors.onBrand, fontSize: 16 },
+  error: { fontFamily: fonts.sans, color: colors.danger, fontSize: 16, lineHeight: 22 },
+  errorLight: {
+    fontFamily: fonts.sans,
+    color: "#F8E6E4",
+    fontSize: 16,
+    lineHeight: 22,
+    textAlign: "center",
+  },
+  itemList: { gap: 12 },
   itemRow: {
-    flexDirection: "row",
-    alignItems: "center",
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: radius.card,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 14,
-    gap: 10,
+    padding: 16,
+    gap: 8,
   },
-  itemName: { fontSize: 16, fontWeight: "700", color: colors.ink },
-  itemBrand: { fontSize: 13, color: colors.inkMuted, marginTop: 2 },
-  itemPrice: { fontSize: 15, fontWeight: "600", color: colors.ink },
-  primaryBtn: {
-    backgroundColor: colors.brand,
-    paddingVertical: 15,
-    borderRadius: 12,
-    alignItems: "center",
+  itemName: {
+    fontFamily: fonts.sansBold,
+    fontSize: 17,
+    color: colors.ink,
+    minHeight: 44,
   },
-  primaryBtnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
-  secondaryBtn: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    paddingVertical: 13,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  secondaryBtnText: { color: colors.ink, fontWeight: "600", fontSize: 15 },
+  itemPrice: { fontFamily: fonts.sansMedium, fontSize: 16, color: colors.ink },
 });

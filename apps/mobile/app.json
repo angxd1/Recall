@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "RecallLens",
+    "name": "WeCanRecall",
     "slug": "recalllens",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -11,12 +11,12 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.recalllens.app",
       "infoPlist": {
-        "NSCameraUsageDescription": "RecallLens uses the camera to scan receipts and verify product lot numbers for recall matching."
+        "NSCameraUsageDescription": "WeCanRecall uses the camera to scan receipts and verify product lot numbers for recall matching."
       }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0B3D2E",
+        "backgroundColor": "#143D32",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -37,13 +37,13 @@
         {
           "image": "./assets/images/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#0B3D2E"
+          "backgroundColor": "#143D32"
         }
       ],
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow RecallLens to access your camera to scan receipts and verify product packages."
+          "cameraPermission": "Allow WeCanRecall to access your camera to scan receipts and verify product packages."
         }
       ],
       "expo-sqlite"

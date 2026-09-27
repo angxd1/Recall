@@ -26,7 +26,7 @@ async function lookup(code: string): Promise<Lookup> {
   const task = (async () => {
     const response = await fetch(
       `https://world.openfoodfacts.org/api/v3/product/${code}?fields=product_name,product_name_en,brands`,
-      { headers: { "User-Agent": "RecallLens/0.1 (https://github.com/angxd1/WeCanRecall)" },
+      { headers: { "User-Agent": "WeCanRecall/0.1 (https://github.com/angxd1/WeCanRecall)" },
         signal: AbortSignal.timeout(8000) }
     );
     if (!response.ok && response.status !== 404) throw new Error("unavailable");

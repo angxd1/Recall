@@ -1,17 +1,14 @@
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Linking,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Linking, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import type { Match, Product, Recall } from "@recalllens/shared";
 
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Screen } from "@/components/ui/Screen";
 import { colors, severityLabel } from "@/constants/theme";
+import { text } from "@/constants/type";
 import { db } from "@/lib/db";
 
 export default function ActionScreen() {
@@ -41,7 +38,7 @@ export default function ActionScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg }}>
         <ActivityIndicator color={colors.brand} />
       </View>
     );
@@ -49,129 +46,64 @@ export default function ActionScreen() {
 
   if (!match || !product || !recall) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.body}>Confirmed match not found.</Text>
-      </View>
+      <Screen>
+        <Text style={text.body}>Confirmed match not found.</Text>
+      </Screen>
     );
   }
 
   const range = recall.identifiers.lotRanges?.[0];
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.heroTitle}>
+    <Screen
+      footer={
+        !recall.isSeed ? (
+          <Button
+            label="Open official recall notice"
+            onPress={() => Linking.openURL(recall.sourceUrl)}
+          />
+        ) : undefined
+      }
+    >
+      <Text style={text.title}>
         {recall.isSeed ? "Demo recall confirmed" : "Recall confirmed"}
       </Text>
-      <Text style={styles.productName}>{product.name}</Text>
-      {match.verifiedLot ? <Text style={styles.lot}>Lot {match.verifiedLot}</Text> : null}
+      <Text style={text.product}>{product.name}</Text>
+      {match.verifiedLot ? <Text style={[text.body, { color: colors.danger }]}>Lot {match.verifiedLot}</Text> : null}
 
-      <View style={styles.card}>
-        <Text style={styles.q}>Official reason</Text>
-        <Text style={styles.a}>{recall.hazard}</Text>
-        <Text style={[styles.q, { marginTop: 12 }]}>What to do</Text>
-        <Text style={styles.a}>{recall.whatToDo}</Text>
-        <Text style={styles.severity}>{severityLabel[recall.severity]}</Text>
-      </View>
+      <Card tone="danger">
+        <Text style={text.label}>Official reason</Text>
+        <Text style={text.body}>{recall.hazard}</Text>
+        <Text style={text.label}>What to do</Text>
+        <Text style={text.body}>{recall.whatToDo}</Text>
+        <Text style={[text.muted, { color: colors.danger }]}>{severityLabel[recall.severity]}</Text>
+      </Card>
 
-      <View style={styles.card}>
-        <Text style={styles.q}>Your product</Text>
-        <Text style={styles.a}>
+      <Card>
+        <Text style={text.label}>Your product</Text>
+        <Text style={text.body}>
           {product.name}
           {match.verifiedUpc ? `\nUPC ${match.verifiedUpc}` : ""}
         </Text>
         {range ? (
           <>
-            <Text style={[styles.q, { marginTop: 12 }]}>Affected lots</Text>
-            <Text style={styles.a}>
+            <Text style={text.label}>Affected lots</Text>
+            <Text style={text.body}>
               {range.start}–{range.end}
             </Text>
-            <Text style={styles.matchOk}>✓ Your lot matches.</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Ionicons name="checkmark-circle-outline" size={18} color={colors.clear} />
+              <Text style={[text.body, { color: colors.clear }]}>Your lot matches.</Text>
+            </View>
           </>
         ) : null}
-      </View>
+      </Card>
 
-      {!recall.isSeed ? <Pressable
-        style={styles.primaryBtn}
-        onPress={() => Linking.openURL(recall.sourceUrl)}
-      >
-        <Text style={styles.primaryBtnText}>Open official recall notice</Text>
-      </Pressable> : null}
-
-      <Text style={styles.footnote}>
+      <Text style={text.muted}>
         {recall.isSeed
           ? "Demo scenario only. This is not an official recall or a real safety alert."
-          : `Guidance is taken from the official ${recall.organization} notice. RecallLens does not invent safety instructions.`}
+          : `Guidance is taken from the official ${recall.organization} notice. WeCanRecall does not invent safety instructions.`}
       </Text>
-    </ScrollView>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.bg,
-  },
-  container: { padding: 20, gap: 14, backgroundColor: colors.bg },
-  hero: {
-    backgroundColor: "#FDECEC",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#F3B4B0",
-    padding: 18,
-    gap: 8,
-  },
-  heroEyebrow: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: colors.danger,
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
-  },
-  heroTitle: {
-    fontSize: 32,
-    fontWeight: "800",
-    color: colors.ink,
-    lineHeight: 38,
-  },
-  productName: { fontSize: 22, fontWeight: "800", color: colors.ink },
-  lot: { fontSize: 17, fontWeight: "700", color: colors.danger },
-  severity: { fontSize: 14, fontWeight: "700", color: colors.danger },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 16,
-    gap: 6,
-  },
-  q: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: colors.inkMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.3,
-  },
-  a: { fontSize: 16, lineHeight: 23, color: colors.ink },
-  matchOk: {
-    marginTop: 8,
-    fontSize: 15,
-    fontWeight: "800",
-    color: colors.clear,
-  },
-  primaryBtn: {
-    backgroundColor: colors.brand,
-    paddingVertical: 18,
-    borderRadius: 14,
-    alignItems: "center",
-  },
-  primaryBtnText: { color: "#fff", fontWeight: "800", fontSize: 18 },
-  body: { color: colors.inkMuted },
-  footnote: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: colors.inkMuted,
-    textAlign: "center",
-  },
-});

@@ -14,7 +14,7 @@ test("barcode lookup and normalization", async (t) => {
   globalThis.fetch = async (url, init) => {
     calls++;
     assert.match(String(url), /0036000291452/);
-    assert.match(String((init?.headers as Record<string, string>)["User-Agent"]), /RecallLens/);
+    assert.match(String((init?.headers as Record<string, string>)["User-Agent"]), /WeCanRecall/);
     return Response.json({ product: { product_name_en: "Test product", brands: "Test brand" } });
   };
   assert.equal((await products.request("/barcode/not-a-upc")).status, 400);

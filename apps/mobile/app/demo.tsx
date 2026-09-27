@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 
-import { colors } from "@/constants/theme";
+import { colors, fonts, radius } from "@/constants/theme";
 import { api, API_BASE } from "@/lib/api";
 import { db } from "@/lib/db";
 import { useInventory } from "@/lib/inventory";
@@ -150,28 +150,31 @@ export default function DemoScreen() {
 
 const styles = StyleSheet.create({
   container: { padding: 24, gap: 12, backgroundColor: colors.bg },
-  title: { fontSize: 26, fontWeight: "800", color: colors.ink },
+  title: { fontFamily: fonts.serif, fontSize: 32, lineHeight: 38, color: colors.ink },
   body: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontFamily: fonts.sans,
+    fontSize: 16,
+    lineHeight: 24,
     color: colors.inkMuted,
     marginBottom: 8,
   },
   stats: { flexDirection: "row", flexWrap: "wrap", gap: 16, marginBottom: 4 },
-  stat: { fontSize: 13, fontWeight: "700", color: colors.brand },
+  stat: { fontFamily: fonts.sansMedium, fontSize: 14, color: colors.brand },
   btn: {
     backgroundColor: colors.brand,
+    minHeight: 48,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: radius.button,
     alignItems: "center",
+    justifyContent: "center",
   },
   accent: { backgroundColor: colors.accent },
   warn: { backgroundColor: colors.warn },
   danger: { backgroundColor: colors.danger },
   btnText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 15,
+    fontFamily: fonts.sansBold,
+    color: colors.onBrand,
+    fontSize: 17,
     textAlign: "center",
   },
   logBox: {

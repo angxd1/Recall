@@ -1,13 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Pressable,
+  Linking,
   StyleSheet,
   Text,
-  TextInput,
   View,
-  ScrollView,
-  Linking,
 } from "react-native";
 import {
   CameraView,
@@ -18,7 +15,11 @@ import { useRouter } from "expo-router";
 import type { Product } from "@recalllens/shared";
 import { barcodeKey, expandUpce } from "@recalllens/shared";
 
+import { Button } from "@/components/ui/Button";
+import { Field } from "@/components/ui/Field";
+import { Screen } from "@/components/ui/Screen";
 import { colors } from "@/constants/theme";
+import { text } from "@/constants/type";
 import { db, newId } from "@/lib/db";
 import { useInventory } from "@/lib/inventory";
 import { api } from "@/lib/api";
@@ -136,108 +137,90 @@ export default function BarcodeScanScreen() {
     }
   };
 
+  const canSave = !duplicate && !lookingUp && !!name.trim() && !!barcodeKey(upc);
+
   return (
-    <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
-      {permission?.granted ? <CameraView
-        style={styles.camera}
-        facing="back"
-        barcodeScannerSettings={{ barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e", "code128"] }}
-        onBarcodeScanned={scanned ? undefined : onBarcode}
-      /> : <View style={{ padding: 16 }}>
-        <Text style={styles.body}>Allow camera access to scan, or type the barcode below.</Text>
-        <Pressable style={styles.primaryBtn} onPress={requestPermission}>
-          <Text style={styles.primaryBtnText}>Allow camera</Text>
-        </Pressable>
-      </View>}
-      <View style={styles.panel}>
-        <Text style={styles.title}>Add product by barcode</Text>
-        <Text style={styles.label}>UPC</Text>
-        <TextInput
-          style={styles.input}
+    <View style={styles.root}>
+      {permission?.granted ? (
+        <CameraView
+          style={styles.camera}
+          facing="back"
+          barcodeScannerSettings={{ barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e", "code128"] }}
+          onBarcodeScanned={scanned ? undefined : onBarcode}
+        />
+      ) : permission ? (
+        <View style={styles.permission}>
+          <Text style={text.body}>Allow camera access to scan, or type the barcode below.</Text>
+          <Button label="Allow camera" onPress={requestPermission} />
+        </View>
+      ) : (
+        <View style={styles.permission}>
+          <ActivityIndicator color={colors.brand} />
+        </View>
+      )}
+      <Screen
+        footer={
+          <Button
+            label="Add to My Products"
+            busy={busy}
+            disabled={!canSave}
+            onPress={save}
+          />
+        }
+      >
+        <Text style={text.title}>Add a barcode</Text>
+        <Field
+          label="UPC"
           value={upc}
           onChangeText={changeCode}
           editable={!busy}
-          accessibilityLabel="UPC"
           placeholder="Scan or type UPC"
-          placeholderTextColor={colors.inkMuted}
           keyboardType="number-pad"
         />
-        <Pressable style={styles.primaryBtn} onPress={() => { void lookup(upc); }} disabled={busy || lookingUp || !upc.trim()}>
-          <Text style={styles.primaryBtnText}>{lookingUp ? "Looking up…" : "Look up product"}</Text>
-        </Pressable>
-        {message ? <Text accessibilityLiveRegion="polite" style={styles.body}>{message}</Text> : null}
-        {source ? <Text style={styles.rescan} accessibilityRole="link"
-          onPress={() => { void Linking.openURL("https://world.openfoodfacts.org").catch(() => {}); }}>
-          Product data: Open Food Facts (ODbL)
-        </Text> : null}
-        <Text style={styles.label}>Product name</Text>
-        <TextInput
-          style={styles.input}
+        <Button
+          label={lookingUp ? "Looking up…" : "Look up product"}
+          variant="quiet"
+          busy={lookingUp}
+          disabled={busy || !upc.trim()}
+          onPress={() => { void lookup(upc); }}
+        />
+        {message ? <Text accessibilityLiveRegion="polite" style={text.body}>{message}</Text> : null}
+        {source ? (
+          <Text
+            style={[text.muted, styles.link]}
+            accessibilityRole="link"
+            onPress={() => { void Linking.openURL("https://world.openfoodfacts.org").catch(() => {}); }}
+          >
+            Product data: Open Food Facts (ODbL)
+          </Text>
+        ) : null}
+        <Field
+          label="Product name"
           value={name}
           onChangeText={setName}
           editable={!busy && !lookingUp && !duplicate}
-          accessibilityLabel="Product name"
           placeholder="e.g. ABC Granola Bars"
-          placeholderTextColor={colors.inkMuted}
         />
-        <Pressable style={[styles.primaryBtn, (duplicate || lookingUp || !name.trim() || !barcodeKey(upc)) && { opacity: 0.5 }]}
-          onPress={save} disabled={busy || lookingUp || duplicate || !name.trim() || !barcodeKey(upc)}>
-          {busy ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.primaryBtnText}>Add to My Products</Text>
-          )}
-        </Pressable>
         {scanned ? (
-          <Pressable disabled={busy} onPress={() => {
-            changeCode("");
-            scanLocked.current = false;
-            setScanned(false);
-          }}>
-            <Text style={styles.rescan}>Scan again</Text>
-          </Pressable>
+          <Button
+            label="Scan again"
+            variant="text"
+            disabled={busy}
+            onPress={() => {
+              changeCode("");
+              scanLocked.current = false;
+              setScanned(false);
+            }}
+          />
         ) : null}
-      </View>
-    </ScrollView>
+      </Screen>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-    gap: 12,
-    backgroundColor: colors.bg,
-  },
-  camera: { height: 260 },
-  panel: { padding: 16, gap: 8 },
-  title: { fontSize: 20, fontWeight: "800", color: colors.ink, marginBottom: 4 },
-  label: { fontSize: 13, fontWeight: "700", color: colors.inkMuted },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: colors.ink,
-  },
-  primaryBtn: {
-    marginTop: 8,
-    backgroundColor: colors.brand,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  primaryBtnText: { color: "#fff", fontWeight: "800", fontSize: 16 },
-  body: { color: colors.inkMuted, fontSize: 15, lineHeight: 21 },
-  rescan: {
-    textAlign: "center",
-    color: colors.accent,
-    fontWeight: "700",
-    marginTop: 8,
-  },
+  root: { flex: 1, backgroundColor: colors.bg },
+  camera: { height: 220 },
+  permission: { padding: 24, gap: 12 },
+  link: { textDecorationLine: "underline" },
 });
