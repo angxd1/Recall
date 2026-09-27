@@ -111,6 +111,7 @@ export default function ReceiptScanScreen() {
       id: newId("prod"),
       name: item.name,
       brand: item.brand,
+      upc: item.upc,
       retailer,
       purchasedAt,
       status: "clear",
@@ -183,6 +184,7 @@ export default function ReceiptScanScreen() {
         <Text style={text.body}>
           {retailer ? `${retailer} · ` : ""}
           Check and correct product names before adding them to My Products.
+          {" "}Product names found by barcode come from Open Food Facts. Compare them with your receipt.
         </Text>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <View style={styles.itemList}>
@@ -199,6 +201,23 @@ export default function ReceiptScanScreen() {
                 ))}
               />
               {item.brand ? <Text style={text.muted}>{item.brand}</Text> : null}
+              {item.receiptName ? <Text style={text.muted}>Receipt: {item.receiptName}</Text> : null}
+              {item.upc ? <Text style={text.muted}>UPC/EAN: {item.upc}</Text> : null}
+              {item.lookupStatus === "found" ? <Text style={text.muted}>Product found in Open Food Facts</Text> : null}
+              {item.lookupStatus === "not_found" ? <Text style={text.muted}>No catalog match. Using the receipt name.</Text> : null}
+              {item.lookupStatus === "unavailable" ? <Text style={text.muted}>Product lookup unavailable. Using the receipt name.</Text> : null}
+              {item.lookupStatus === "invalid_code" ? <Text style={text.muted}>Could not validate the printed code. Using the receipt name.</Text> : null}
+              {item.lookupStatus === "retailer_code" ? <Text style={text.muted}>Store item number detected. Using the receipt name.</Text> : null}
+              {item.upc ? (
+                <Button
+                  label={item.lookupStatus === "found" ? "Use receipt name instead" : "Remove barcode"}
+                  variant="text"
+                  disabled={phase === "saving"}
+                  onPress={() => setItems((current) => current.map((entry, i) => i === idx
+                    ? { ...entry, name: entry.receiptName ?? entry.name, brand: undefined, upc: undefined, receiptName: undefined, lookupStatus: undefined }
+                    : entry))}
+                />
+              ) : null}
               {item.price != null ? (
                 <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
               ) : null}

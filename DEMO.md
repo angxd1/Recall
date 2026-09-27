@@ -29,6 +29,14 @@
 
 Try A2000 first to demonstrate an unaffected lot. A live notice supplies a lot or UPC only when that value is written in the open-data text, so this demo still uses the fictional recall. The site checks on open and shows a popup when a saved product newly matches. Package-label OCR is not implemented.
 
+## Receipt barcode lookup
+
+For a receipt with a printed UPC/EAN, review the Open Food Facts product name,
+original receipt text and code before saving. **Use receipt name instead** rejects
+a wrong catalog result and removes its brand/code. A store SKU or an unsuccessful
+lookup keeps the receipt name. The standard fixture has no product codes and still
+demonstrates text extraction; catalog coverage is not guaranteed for every product.
+
 ## Reset between runs
 
 Demo controls → **Reset inventory**, then reload demo receipt + inject again.
