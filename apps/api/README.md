@@ -37,8 +37,20 @@ The API sends receipt images to your configured Ollama server, requests structur
 validates the result and returns products for user review. Names can be corrected before saving.
 Only `useDemo: true` or `/receipts/demo` returns samples. Invalid/unreadable results return 422,
 an unavailable model returns 503, and concurrent extraction requests return 429.
-Each API process permits one extraction at a time and a 120-second request timeout.
+Each API process permits one extraction at a time and a 120-second model timeout.
 Images are limited to roughly 10 MB (14.1 MB HTTP body limit).
+
+After inference, `services/productLookup.ts` enriches checksum-valid printed product
+codes through the same cache and request budget as the barcode endpoint. The model
+reports `productCode` and `codeType` (`upc`, `ean`, `sku`, or `unknown`); explicit
+retailer SKUs are skipped and missing codes require no lookup. Catalog hits return
+`name`, `brand`, canonical `upc`, `receiptName`, and `lookupStatus: "found"`.
+Other statuses are `not_found`, `unavailable`, `invalid_code`, and `retailer_code`.
+Failures retain the printed name; unknown codes become UPCs only on a catalog hit.
+Explicit valid UPC/EAN codes remain available for review even on a catalog miss.
+Lookups run concurrently and add at most the provider timeout after inference;
+the shared 14-request/minute budget limits outbound traffic on large receipts.
+Only codes go to Open Food Facts. Receipt images remain with the configured Ollama.
 
 ## Hosting
 

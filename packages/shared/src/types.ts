@@ -63,6 +63,9 @@ export interface Match {
 export interface ReceiptLineItem {
   name: string;
   brand?: string;
+  upc?: string;
+  receiptName?: string;
+  lookupStatus?: "found" | "not_found" | "unavailable" | "invalid_code" | "retailer_code";
   price?: number;
   quantity?: number;
 }

@@ -28,6 +28,11 @@ EXPO_PUBLIC_API_URL belongs to the Expo process; use a LAN address for physical 
   and show source recall instructions rather than model-generated safety advice.
 - Label fictional seed recalls visibly as demo data.
 - Barcode names come from Open Food Facts, with attribution and manual fallback.
+  Receipt extraction reuses services/productLookup.ts. Only checksum-valid printed
+  UPC/EAN candidates may be looked up; skip explicit retailer SKUs. Unlabeled codes
+  become product UPCs only after a catalog hit. Keep the printed name for review,
+  allow rejecting a lookup, and persist accepted UPCs when saving receipt products.
+  Provider failures must preserve readable receipt items, never fail the whole scan.
   Preserve check-digit validation, canonical UPC/EAN matching, request limits and
   atomic duplicate prevention in both storage backends. Do not deduplicate by guessed
   product names or overwrite existing recall status when a barcode is scanned again.

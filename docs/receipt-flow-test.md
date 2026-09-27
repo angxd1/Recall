@@ -76,3 +76,26 @@ Automated checks cover invalid check digits, UPC/EAN normalization, UPC-E expans
 provider lookup/cache, not-found responses and provider failures. IndexedDB tests
 also verify concurrent equivalent barcode saves produce only one product and that a
 repeat scan preserves the existing recall status.
+
+## Receipt product-code enrichment (September 27)
+
+On Windows with Ollama 0.34.4 and Qwen2.5-VL 3B, a synthetic receipt containing
+`NUTELLA SPRD`, EAN `3017620422003`, and a milk line labeled `SKU 12345` exercised
+real image extraction and live Open Food Facts lookup. The first API check took
+12.6 seconds and returned Nutella / Nutella, Ferrero, preserved `NUTELLA SPRD`,
+and retained the canonical UPC/EAN. The milk line kept its printed name and was
+identified as a retailer code. No retailer catalog mapping is implemented.
+
+The Codex browser upload flow at `127.0.0.1:8081` showed the original name, source,
+and code. Rejecting the match removed its brand/code and restored the receipt text.
+An empty edited name disabled saving. A second upload saved the accepted catalog
+product and an edited milk name; both survived reload. Entering the same EAN on
+the barcode screen identified Nutella as already saved, verifying code persistence.
+This used a separate browser origin from the user's localhost inventory.
+
+The original three-item fixture also passed real extraction and affected/unaffected
+demo lot verification. Prompt guidance preserves prices alongside codes, and model
+placeholders such as `unknown` are treated as absent codes. Automated tests cover
+shared cache/deduplication, invalid checksums, explicit SKUs, missing/null codes,
+provider misses, malformed responses, network/timeout failures and request limits.
+Typecheck, lint and web export passed. Physical camera capture was not tested.

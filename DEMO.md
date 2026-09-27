@@ -31,6 +31,14 @@ Try A2000 first to demonstrate an unaffected lot. Real Health Canada sync does n
 provide the lot/UPC identifiers used in this demo. Matching is manually triggered;
 background monitoring and notifications are not implemented.
 
+## Receipt barcode lookup
+
+For a receipt with a printed UPC/EAN, review the Open Food Facts product name,
+original receipt text and code before saving. **Use receipt name instead** rejects
+a wrong catalog result and removes its brand/code. A store SKU or an unsuccessful
+lookup keeps the receipt name. The standard fixture has no product codes and still
+demonstrates text extraction; catalog coverage is not guaranteed for every product.
+
 ## Reset between runs
 
 Demo controls → **Reset inventory**, then reload demo receipt + inject again.

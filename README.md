@@ -48,6 +48,15 @@ Open **Scan receipt → Upload receipt photo** and select
 `scripts/fixtures/receipt.png` to test real extraction. Review the three products and save.
 **Use demo receipt** works without Ollama but requires the API.
 
+Receipt scans also read printed product codes and look up valid UPC/EAN candidates
+in Open Food Facts for full names and brands. The review screen shows the original
+receipt name, the accepted code and lookup status. Use **Use receipt name instead**
+to reject a mismatched result before saving. Explicit store SKUs, invalid codes,
+missing catalog entries and lookup failures retain the receipt name. Unlabeled
+numbers are saved as UPCs only when the catalog recognizes them. Open Food Facts
+coverage is food focused; no retailer SKU catalog is connected. Only product codes
+are sent to Open Food Facts, never the receipt image. No new configuration is needed.
+
 ### Physical phones
 
 Use the same network as the development machine and allow ports 8081 and 8787 through
