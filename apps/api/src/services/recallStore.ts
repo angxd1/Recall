@@ -112,6 +112,11 @@ export const recallStore = {
     return store.recalls;
   },
 
+  async lastSyncedAt(): Promise<string | null> {
+    const store = await ensureStore();
+    return store.lastSyncedAt ?? null;
+  },
+
   async get(id: string): Promise<Recall | undefined> {
     const store = await ensureStore();
     return store.recalls.find((r) => r.id === id);
@@ -195,9 +200,10 @@ export const recallStore = {
           path.join(DATA_DIR, "hc-cache.json"),
           "utf8"
         );
-        const cache = JSON.parse(cacheRaw) as { recalls: Recall[] };
+        const cache = JSON.parse(cacheRaw) as { recalls: Recall[]; cachedAt?: string };
         const seeds = store.recalls.filter((r) => r.isSeed);
         store.recalls = [...seeds, ...cache.recalls];
+        if (cache.cachedAt) store.lastSyncedAt = cache.cachedAt;
         await writeStore(store);
         return {
           ok: true,

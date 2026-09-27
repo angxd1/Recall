@@ -133,13 +133,11 @@ export default function VerifyScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.guide}>
-        <Text style={styles.guideTitle}>Find the lot / UPC on the package</Text>
+        <Text style={styles.guideTitle}>Check your package</Text>
         <Text style={styles.guideBody}>
-          This recall checks{" "}
           {range
-            ? `lots ${range.start}–${range.end}`
-            : "the identifiers listed on the official notice"}
-          .
+            ? `Enter the lot code. Affected lots are ${range.start}–${range.end}.`
+            : "Enter the lot or UPC printed on the package."}
         </Text>
       </View>
 
@@ -219,8 +217,8 @@ const styles = StyleSheet.create({
   },
   container: { flex: 1, backgroundColor: colors.bg },
   guide: { padding: 16, gap: 4 },
-  guideTitle: { fontSize: 18, fontWeight: "800", color: colors.ink },
-  guideBody: { fontSize: 14, lineHeight: 20, color: colors.inkMuted },
+  guideTitle: { fontSize: 32, fontWeight: "800", color: colors.ink, lineHeight: 38 },
+  guideBody: { fontSize: 17, lineHeight: 24, color: colors.inkMuted },
   camera: { height: 220 },
   cameraPlaceholder: {
     height: 180,
@@ -255,13 +253,13 @@ const styles = StyleSheet.create({
   multiline: { minHeight: 72, textAlignVertical: "top" },
   message: { color: colors.warn, fontSize: 14, lineHeight: 20 },
   primaryBtn: {
-    marginTop: 6,
+    marginTop: 8,
     backgroundColor: colors.brand,
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: 18,
+    borderRadius: 14,
     alignItems: "center",
   },
-  primaryBtnText: { color: "#fff", fontWeight: "800", fontSize: 16 },
+  primaryBtnText: { color: "#fff", fontWeight: "800", fontSize: 18 },
   demoBtn: { paddingVertical: 12, alignItems: "center" },
   demoBtnText: { color: colors.accent, fontWeight: "700", fontSize: 14 },
   secondaryBtn: {

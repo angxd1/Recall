@@ -27,18 +27,17 @@ export function ProductRow({
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
+      <StatusChip status={product.status} />
       <View style={styles.main}>
-        <Text style={styles.name} numberOfLines={1}>
+        <Text style={styles.name} numberOfLines={2}>
           {product.name}
         </Text>
-        {product.brand ? (
-          <Text style={styles.brand} numberOfLines={1}>
-            {product.brand}
-          </Text>
-        ) : null}
-        <Text style={styles.meta}>Purchased {formatDate(product.purchasedAt)}</Text>
+        <Text style={styles.meta} numberOfLines={1}>
+          {[product.brand, `Purchased ${formatDate(product.purchasedAt)}`]
+            .filter(Boolean)
+            .join(" · ")}
+        </Text>
       </View>
-      <StatusChip status={product.status} />
     </Pressable>
   );
 }
@@ -46,15 +45,14 @@ export function ProductRow({
 const styles = StyleSheet.create({
   row: {
     backgroundColor: colors.surface,
-    borderRadius: 14,
-    padding: 16,
+    borderRadius: 16,
+    padding: 18,
     borderWidth: 1,
     borderColor: colors.border,
-    gap: 10,
+    gap: 12,
   },
   pressed: { opacity: 0.85 },
-  main: { gap: 2 },
-  name: { fontSize: 17, fontWeight: "700", color: colors.ink },
-  brand: { fontSize: 14, color: colors.inkMuted },
-  meta: { fontSize: 13, color: colors.inkMuted, marginTop: 4 },
+  main: { gap: 4 },
+  name: { fontSize: 20, fontWeight: "800", color: colors.ink, lineHeight: 26 },
+  meta: { fontSize: 15, color: colors.inkMuted },
 });

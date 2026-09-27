@@ -15,6 +15,17 @@ const product = {
 const potential = isPotentialProductMatch(product, DEMO_SEED_RECALL);
 assert.equal(potential.matched, true, "Stage-1 should match ABC Granola Bars");
 
+const generic = isPotentialProductMatch(
+  { name: "Frozen Berries", brand: undefined, upc: undefined },
+  {
+    ...DEMO_SEED_RECALL,
+    title: "Frozen strawberries recalled over possible contamination",
+    productNames: ["Frozen Strawberries"],
+    brands: [],
+  }
+);
+assert.equal(generic.matched, false, "Generic grocery words must not match");
+
 const lot = extractLotFromOcr("LOT A1842 BEST BEFORE 2026-11-01");
 assert.equal(lot, "A1842");
 

@@ -64,32 +64,16 @@ export default function AlertDetailScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.banner}>
-        <Text style={styles.bannerEyebrow}>{recall.isSeed ? "Demo potential match" : "Potential Recall Match"}</Text>
-        <Text style={styles.bannerTitle}>
-          {recall.isSeed ? "Fictional demo scenario — not an official recall." : "A product you purchased may be included in a new recall."}
-        </Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.productName}>{product.name}</Text>
-        {product.brand ? (
-          <Text style={styles.meta}>{product.brand}</Text>
-        ) : null}
-        <Text style={styles.meta}>Purchased {purchased}</Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.sectionLabel}>Recall notice</Text>
-        <Text style={styles.recallTitle}>{recall.title}</Text>
-        <Text style={styles.meta}>{severityLabel[recall.severity]}</Text>
-        <Text style={styles.body}>{recall.hazard}</Text>
-      </View>
-
-      <Text style={styles.note}>
-        We need to check your package to determine whether your specific product
-        is affected. This is not yet a confirmed recall for your unit.
+      <Text style={styles.headline}>Check this package</Text>
+      <Text style={styles.lead}>
+        {product.name} may be part of a recall. Purchased {purchased}. This is not a confirmation until the package is checked.
       </Text>
+
+      <View style={styles.card}>
+        <Text style={styles.sectionLabel}>Official reason</Text>
+        <Text style={styles.body}>{recall.hazard}</Text>
+        <Text style={styles.meta}>{severityLabel[recall.severity]}</Text>
+      </View>
 
       <Pressable
         style={styles.primaryBtn}
@@ -137,6 +121,8 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.4,
   },
+  headline: { fontSize: 32, fontWeight: "800", color: colors.ink, lineHeight: 38 },
+  lead: { fontSize: 17, lineHeight: 24, color: colors.ink },
   bannerTitle: { fontSize: 20, fontWeight: "800", color: colors.ink, lineHeight: 26 },
   card: {
     backgroundColor: colors.surface,
@@ -159,11 +145,11 @@ const styles = StyleSheet.create({
   note: { fontSize: 14, lineHeight: 20, color: colors.inkMuted },
   primaryBtn: {
     backgroundColor: colors.accent,
-    paddingVertical: 15,
-    borderRadius: 12,
+    paddingVertical: 18,
+    borderRadius: 14,
     alignItems: "center",
   },
-  primaryBtnText: { color: "#fff", fontWeight: "800", fontSize: 16 },
+  primaryBtnText: { color: "#fff", fontWeight: "800", fontSize: 18 },
   secondaryBtn: {
     paddingVertical: 12,
     alignItems: "center",

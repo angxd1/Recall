@@ -7,6 +7,7 @@ import { demo } from "./routes/demo";
 import { match } from "./routes/match";
 import { health } from "./routes/health";
 import { products } from "./routes/products";
+import { recallStore } from "./services/recallStore";
 
 const app = new Hono();
 
@@ -26,6 +27,20 @@ app.route("/demo", demo);
 app.route("/match", match);
 
 const port = Number(process.env.PORT ?? 8787);
+const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
+
+function watchRecalls() {
+  void recallStore.syncFromHealthCanada().then((result) => {
+    console.log(
+      `Recall sync ${result.source}: ${result.imported} notices` +
+        (result.error ? ` (${result.error})` : "")
+    );
+  });
+}
+
+watchRecalls();
+const recallTimer = setInterval(watchRecalls, SIX_HOURS_MS);
+recallTimer.unref?.();
 
 console.log(`RecallLens API listening on http://localhost:${port}`);
 

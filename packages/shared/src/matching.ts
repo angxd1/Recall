@@ -14,7 +14,42 @@ function tokens(text: string): string[] {
     .filter((t) => t.length > 2);
 }
 
-/** Stage-1 fuzzy match: product name/brand against recall product strings. */
+const GENERIC_WORDS = new Set([
+  "frozen",
+  "berries",
+  "berry",
+  "organic",
+  "whole",
+  "milk",
+  "fresh",
+  "original",
+  "classic",
+  "natural",
+  "food",
+  "product",
+  "products",
+  "recall",
+  "recalled",
+  "bars",
+  "bar",
+  "pack",
+  "size",
+  "style",
+]);
+
+function distinctiveTokens(text: string): string[] {
+  return tokens(text).filter((token) => token.length >= 4 && !GENERIC_WORDS.has(token));
+}
+
+function hasWord(haystack: string, word: string): boolean {
+  return ` ${haystack} `.includes(` ${word} `);
+}
+
+/**
+ * Stage-1 match. A hit needs a UPC, the full product name inside the notice,
+ * a single distinctive product word, or the brand plus one distinctive word.
+ * Shared generic words such as "frozen" and "berries" do not match.
+ */
 export function isPotentialProductMatch(
   product: Pick<Product, "name" | "brand" | "upc">,
   recall: Pick<Recall, "productNames" | "brands" | "identifiers" | "title">
@@ -25,47 +60,38 @@ export function isPotentialProductMatch(
     fields.push("upc");
   }
 
-  const productTokens = new Set([
-    ...tokens(product.name),
-    ...(product.brand ? tokens(product.brand) : []),
-  ]);
+  const recallTexts = [recall.title, ...recall.productNames, ...recall.brands].map(normalize);
+  const name = normalize(product.name);
+  const brand = product.brand ? normalize(product.brand) : "";
+  const fullName = normalize([product.brand, product.name].filter(Boolean).join(" "));
+  const nameTokens = distinctiveTokens(product.name);
+  const nameWords = tokens(name);
 
-  const recallTexts = [
-    recall.title,
-    ...recall.productNames,
-    ...recall.brands,
-  ].map(normalize);
-
-  for (const text of recallTexts) {
-    const recallTokens = tokens(text);
-    const overlap = recallTokens.filter((t) => productTokens.has(t));
-    // Require at least 2 overlapping significant tokens, or one distinctive brand+product hit
-    if (overlap.length >= 2) {
-      fields.push("name");
-      break;
-    }
-    if (
-      product.brand &&
-      normalize(product.brand).length > 2 &&
-      text.includes(normalize(product.brand)) &&
-      overlap.length >= 1
-    ) {
-      fields.push("brand");
-      break;
-    }
+  if (
+    fullName.length >= 8 &&
+    nameTokens.length > 0 &&
+    recallTexts.some((text) => text.includes(fullName))
+  ) {
+    fields.push("name");
   }
 
-  // Direct substring for demo reliability (e.g. "ABC Granola Bars")
-  const productKey = normalize(
-    [product.brand, product.name].filter(Boolean).join(" ")
-  );
-  for (const text of recallTexts) {
-    if (
-      productKey.length >= 6 &&
-      (text.includes(productKey) || productKey.includes(text))
-    ) {
-      if (!fields.includes("name")) fields.push("name");
-    }
+  if (
+    nameWords.length === 1 &&
+    nameWords[0].length >= 6 &&
+    !GENERIC_WORDS.has(nameWords[0]) &&
+    recallTexts.some((text) => hasWord(text, nameWords[0]))
+  ) {
+    fields.push("name");
+  }
+
+  if (
+    brand.length >= 3 &&
+    nameTokens.length > 0 &&
+    recallTexts.some(
+      (text) => hasWord(text, brand) && nameTokens.some((token) => hasWord(text, token))
+    )
+  ) {
+    fields.push("brand");
   }
 
   return { matched: fields.length > 0, fields: [...new Set(fields)] };

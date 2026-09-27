@@ -47,6 +47,22 @@ export async function runPotentialMatching(
   return created;
 }
 
+/** Pull the cached Health Canada notices, then compare them to owned products. */
+export async function checkRecalls(): Promise<{ lastCheckedAt: string | null }> {
+  let lastCheckedAt: string | null = null;
+  try {
+    const listed = await api.listRecalls();
+    lastCheckedAt = listed.lastSyncedAt;
+    for (const recall of listed.recalls) {
+      await db.upsertRecall(recall);
+    }
+  } catch {
+    lastCheckedAt = null;
+  }
+  await syncAndMatch();
+  return { lastCheckedAt };
+}
+
 /** Prefer server matching when online; fall back to local. */
 export async function syncAndMatch(): Promise<{
   matchesCreated: number;

@@ -38,7 +38,7 @@ export default function BarcodeScanScreen() {
   const scanLocked = useRef(false);
   const saveLocked = useRef(false);
   const router = useRouter();
-  const { refresh } = useInventory();
+  const { monitor } = useInventory();
 
   useEffect(() => () => { generation.current++; }, []);
 
@@ -126,7 +126,7 @@ export default function BarcodeScanScreen() {
         setMessage(`You already have this product in your list: ${existing.name}.`);
         return;
       }
-      await refresh();
+      await monitor();
       router.replace("/(tabs)/products");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not save this product. Please try again.");

@@ -59,29 +59,24 @@ export default function ActionScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.hero}>
-        <Text style={styles.heroEyebrow}>{recall.isSeed ? "Demo recall confirmed" : "Recall confirmed"}</Text>
-        <Text style={styles.heroTitle}>
-          {recall.isSeed ? "Your product matches the fictional demo recall." : "Your product matches an active recall."}
-        </Text>
-        <Text style={styles.severity}>{severityLabel[recall.severity]}</Text>
-      </View>
+      <Text style={styles.heroTitle}>
+        {recall.isSeed ? "Demo recall confirmed" : "Recall confirmed"}
+      </Text>
+      <Text style={styles.productName}>{product.name}</Text>
+      {match.verifiedLot ? <Text style={styles.lot}>Lot {match.verifiedLot}</Text> : null}
 
       <View style={styles.card}>
-        <Text style={styles.q}>Why was it recalled?</Text>
+        <Text style={styles.q}>Official reason</Text>
         <Text style={styles.a}>{recall.hazard}</Text>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.q}>What should I do?</Text>
+        <Text style={[styles.q, { marginTop: 12 }]}>What to do</Text>
         <Text style={styles.a}>{recall.whatToDo}</Text>
+        <Text style={styles.severity}>{severityLabel[recall.severity]}</Text>
       </View>
 
       <View style={styles.card}>
         <Text style={styles.q}>Your product</Text>
         <Text style={styles.a}>
           {product.name}
-          {match.verifiedLot ? `\nLot ${match.verifiedLot}` : ""}
           {match.verifiedUpc ? `\nUPC ${match.verifiedUpc}` : ""}
         </Text>
         {range ? (
@@ -135,11 +130,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   heroTitle: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: "800",
     color: colors.ink,
-    lineHeight: 30,
+    lineHeight: 38,
   },
+  productName: { fontSize: 22, fontWeight: "800", color: colors.ink },
+  lot: { fontSize: 17, fontWeight: "700", color: colors.danger },
   severity: { fontSize: 14, fontWeight: "700", color: colors.danger },
   card: {
     backgroundColor: colors.surface,
@@ -165,11 +162,11 @@ const styles = StyleSheet.create({
   },
   primaryBtn: {
     backgroundColor: colors.brand,
-    paddingVertical: 15,
-    borderRadius: 12,
+    paddingVertical: 18,
+    borderRadius: 14,
     alignItems: "center",
   },
-  primaryBtnText: { color: "#fff", fontWeight: "800", fontSize: 16 },
+  primaryBtnText: { color: "#fff", fontWeight: "800", fontSize: 18 },
   body: { color: colors.inkMuted },
   footnote: {
     fontSize: 12,

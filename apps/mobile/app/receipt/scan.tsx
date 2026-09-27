@@ -32,7 +32,7 @@ export default function ReceiptScanScreen() {
     new Date().toISOString()
   );
   const router = useRouter();
-  const { refresh } = useInventory();
+  const { monitor } = useInventory();
 
   const applyExtract = (payload: {
     items: ReceiptLineItem[];
@@ -117,7 +117,7 @@ export default function ReceiptScanScreen() {
     }));
     try {
       await db.insertProducts(products);
-      await refresh();
+      await monitor();
       router.replace("/(tabs)/products");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save products. Please try again.");

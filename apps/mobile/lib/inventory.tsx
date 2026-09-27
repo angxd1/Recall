@@ -4,21 +4,25 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import type { Match, Product, Recall } from "@recalllens/shared";
 import { computeSafetyScore } from "@recalllens/shared";
-import { Button, Text, View } from "react-native";
+import { AppState, Button, Text, View } from "react-native";
 
 import { db } from "@/lib/db";
+import { checkRecalls } from "@/lib/matching";
 
 type InventoryState = {
   products: Product[];
   matches: Match[];
   recalls: Recall[];
   loading: boolean;
+  lastCheckedAt: string | null;
   refresh: () => Promise<void>;
+  monitor: () => Promise<void>;
   safetyScore: ReturnType<typeof computeSafetyScore>;
   activePotentialMatches: Match[];
 };
@@ -30,7 +34,9 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [recalls, setRecalls] = useState<Recall[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastCheckedAt, setLastCheckedAt] = useState<string | null>(null);
   const [storageError, setStorageError] = useState<string | null>(null);
+  const monitoring = useRef(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -51,13 +57,34 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  useEffect(() => {
-    void refresh();
-    if (typeof window === "undefined" || !window.addEventListener) return;
-    const onFocus = () => { void refresh(); };
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
+  const monitor = useCallback(async () => {
+    if (monitoring.current) return;
+    monitoring.current = true;
+    try {
+      const result = await checkRecalls();
+      setLastCheckedAt(result.lastCheckedAt);
+      await refresh();
+    } finally {
+      monitoring.current = false;
+    }
   }, [refresh]);
+
+  useEffect(() => {
+    void monitor();
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") void monitor();
+    });
+    const onFocus = () => { void monitor(); };
+    if (typeof window !== "undefined" && window.addEventListener) {
+      window.addEventListener("focus", onFocus);
+    }
+    return () => {
+      subscription.remove();
+      if (typeof window !== "undefined" && window.removeEventListener) {
+        window.removeEventListener("focus", onFocus);
+      }
+    };
+  }, [monitor]);
 
   const safetyScore = useMemo(() => computeSafetyScore(products), [products]);
 
@@ -72,11 +99,13 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       matches,
       recalls,
       loading,
+      lastCheckedAt,
       refresh,
+      monitor,
       safetyScore,
       activePotentialMatches,
     }),
-    [products, matches, recalls, loading, refresh, safetyScore, activePotentialMatches]
+    [products, matches, recalls, loading, lastCheckedAt, refresh, monitor, safetyScore, activePotentialMatches]
   );
 
   return (

@@ -6,7 +6,8 @@ export const recalls = new Hono();
 
 recalls.get("/", async (c) => {
   const items = await recallStore.list();
-  return c.json({ recalls: items, count: items.length });
+  const lastSyncedAt = await recallStore.lastSyncedAt();
+  return c.json({ recalls: items, count: items.length, lastSyncedAt });
 });
 
 recalls.get("/:id", async (c) => {

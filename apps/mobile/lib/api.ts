@@ -68,7 +68,9 @@ export const api = {
     }>("/recalls/sync", { method: "POST" }),
 
   listRecalls: () =>
-    request<{ recalls: Recall[]; count: number }>("/recalls"),
+    request<{ recalls: Recall[]; count: number; lastSyncedAt: string | null }>(
+      "/recalls"
+    ),
 
   injectDemoRecall: () =>
     request<{ recall: Recall; message: string }>("/demo/inject-recall", {
