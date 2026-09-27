@@ -1,18 +1,29 @@
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import {
   DEMO_RECEIPT_ITEMS,
   type ExtractReceiptResponse,
 } from "@recalllens/shared";
-import { extractReceiptFromImage } from "../services/receiptExtract";
+import { extractReceiptFromImage, ReceiptExtractionError } from "../services/receiptExtract";
 
 export const receipts = new Hono();
+
+receipts.use("/extract", bodyLimit({ maxSize: 14_100_000 }));
+receipts.onError((error, c) => {
+  if (error instanceof ReceiptExtractionError) return c.json({ error: error.message }, error.status);
+  if (error instanceof SyntaxError) return c.json({ error: "Invalid receipt request." }, 400);
+  return c.json({ error: "Receipt extraction failed." }, 500);
+});
 
 receipts.post("/extract", async (c) => {
   const contentType = c.req.header("content-type") ?? "";
 
   if (contentType.includes("application/json")) {
     const body = await c.req.json<{ useDemo?: boolean; imageBase64?: string }>();
-    if (body.useDemo) {
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return c.json({ error: "Provide a receipt request object." }, 400);
+    }
+    if (body.useDemo === true) {
       const response: ExtractReceiptResponse = {
         retailer: "Walmart",
         purchasedAt: new Date().toISOString(),
@@ -20,7 +31,7 @@ receipts.post("/extract", async (c) => {
       };
       return c.json(response);
     }
-    if (body.imageBase64) {
+    if (typeof body.imageBase64 === "string" && body.imageBase64) {
       const result = await extractReceiptFromImage(body.imageBase64);
       return c.json(result);
     }
@@ -36,7 +47,8 @@ receipts.post("/extract", async (c) => {
       const result = await extractReceiptFromImage(buf.toString("base64"));
       return c.json(result);
     }
-  } catch {
+  } catch (error) {
+    if (error instanceof ReceiptExtractionError) throw error;
     // fall through
   }
 

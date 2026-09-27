@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { Match, Product, Recall } from "@recalllens/shared";
 import { computeSafetyScore } from "@recalllens/shared";
+import { Button, Text, View } from "react-native";
 
 import { db } from "@/lib/db";
 
@@ -29,6 +30,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [recalls, setRecalls] = useState<Recall[]>([]);
   const [loading, setLoading] = useState(true);
+  const [storageError, setStorageError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -41,6 +43,9 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       setProducts(p);
       setMatches(m);
       setRecalls(r);
+      setStorageError(null);
+    } catch (error) {
+      setStorageError(error instanceof Error ? error.message : "Unable to open saved inventory.");
     } finally {
       setLoading(false);
     }
@@ -48,6 +53,10 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void refresh();
+    if (typeof window === "undefined" || !window.addEventListener) return;
+    const onFocus = () => { void refresh(); };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, [refresh]);
 
   const safetyScore = useMemo(() => computeSafetyScore(products), [products]);
@@ -71,7 +80,15 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <InventoryContext.Provider value={value}>{children}</InventoryContext.Provider>
+    <InventoryContext.Provider value={value}>
+      {storageError ? (
+        <View style={{ flex: 1, justifyContent: "center", padding: 24, gap: 16 }}>
+          <Text accessibilityRole="header" style={{ fontSize: 22 }}>Unable to open inventory</Text>
+          <Text>{storageError}</Text>
+          <Button title="Try again" onPress={() => { void refresh(); }} />
+        </View>
+      ) : children}
+    </InventoryContext.Provider>
   );
 }
 

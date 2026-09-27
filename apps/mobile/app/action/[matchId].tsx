@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Linking,
@@ -16,28 +16,28 @@ import { db } from "@/lib/db";
 
 export default function ActionScreen() {
   const { matchId } = useLocalSearchParams<{ matchId: string }>();
-  const [loading, setLoading] = useState(true);
+  const [loadedId, setLoadedId] = useState<string | null>(null);
+  const loading = loadedId !== String(matchId);
   const [match, setMatch] = useState<Match | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
   const [recall, setRecall] = useState<Recall | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const m = await db.getMatch(String(matchId));
-      setMatch(m);
-      if (!m) return;
-      const products = await db.listProducts();
-      setProduct(products.find((p) => p.id === m.productId) ?? null);
-      setRecall(await db.getRecall(m.recallId));
-    } finally {
-      setLoading(false);
-    }
-  }, [matchId]);
-
   useEffect(() => {
-    void load();
-  }, [load]);
+    let active = true;
+    void db.getMatch(String(matchId)).then(async (m) => {
+      const products = m ? await db.listProducts() : [];
+      const foundRecall = m ? await db.getRecall(m.recallId) : null;
+      if (!active) return;
+      setMatch(m);
+      setProduct(products.find((p) => p.id === m?.productId) ?? null);
+      setRecall(foundRecall);
+    }).catch(() => {
+      if (active) setMatch(null);
+    }).finally(() => {
+      if (active) setLoadedId(String(matchId));
+    });
+    return () => { active = false; };
+  }, [matchId]);
 
   if (loading) {
     return (
@@ -60,9 +60,9 @@ export default function ActionScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.hero}>
-        <Text style={styles.heroEyebrow}>Recall confirmed</Text>
+        <Text style={styles.heroEyebrow}>{recall.isSeed ? "Demo recall confirmed" : "Recall confirmed"}</Text>
         <Text style={styles.heroTitle}>
-          Your product matches an active recall.
+          {recall.isSeed ? "Your product matches the fictional demo recall." : "Your product matches an active recall."}
         </Text>
         <Text style={styles.severity}>{severityLabel[recall.severity]}</Text>
       </View>
@@ -95,16 +95,17 @@ export default function ActionScreen() {
         ) : null}
       </View>
 
-      <Pressable
+      {!recall.isSeed ? <Pressable
         style={styles.primaryBtn}
         onPress={() => Linking.openURL(recall.sourceUrl)}
       >
         <Text style={styles.primaryBtnText}>Open official recall notice</Text>
-      </Pressable>
+      </Pressable> : null}
 
       <Text style={styles.footnote}>
-        Guidance is taken from the official {recall.organization} notice.
-        RecallLens does not invent safety instructions.
+        {recall.isSeed
+          ? "Demo scenario only. This is not an official recall or a real safety alert."
+          : `Guidance is taken from the official ${recall.organization} notice. RecallLens does not invent safety instructions.`}
       </Text>
     </ScrollView>
   );

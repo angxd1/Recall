@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -18,28 +18,28 @@ export default function AlertDetailScreen() {
   const { matchId } = useLocalSearchParams<{ matchId: string }>();
   const router = useRouter();
   const { refresh } = useInventory();
-  const [loading, setLoading] = useState(true);
+  const [loadedId, setLoadedId] = useState<string | null>(null);
+  const loading = loadedId !== String(matchId);
   const [match, setMatch] = useState<Match | null>(null);
   const [product, setProduct] = useState<Product | null>(null);
   const [recall, setRecall] = useState<Recall | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const m = await db.getMatch(String(matchId));
-      setMatch(m);
-      if (!m) return;
-      const products = await db.listProducts();
-      setProduct(products.find((p) => p.id === m.productId) ?? null);
-      setRecall(await db.getRecall(m.recallId));
-    } finally {
-      setLoading(false);
-    }
-  }, [matchId]);
-
   useEffect(() => {
-    void load();
-  }, [load]);
+    let active = true;
+    void db.getMatch(String(matchId)).then(async (m) => {
+      const products = m ? await db.listProducts() : [];
+      const foundRecall = m ? await db.getRecall(m.recallId) : null;
+      if (!active) return;
+      setMatch(m);
+      setProduct(products.find((p) => p.id === m?.productId) ?? null);
+      setRecall(foundRecall);
+    }).catch(() => {
+      if (active) setMatch(null);
+    }).finally(() => {
+      if (active) setLoadedId(String(matchId));
+    });
+    return () => { active = false; };
+  }, [matchId]);
 
   if (loading) {
     return (
@@ -65,9 +65,9 @@ export default function AlertDetailScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.banner}>
-        <Text style={styles.bannerEyebrow}>Potential Recall Match</Text>
+        <Text style={styles.bannerEyebrow}>{recall.isSeed ? "Demo potential match" : "Potential Recall Match"}</Text>
         <Text style={styles.bannerTitle}>
-          A product you purchased may be included in a new recall.
+          {recall.isSeed ? "Fictional demo scenario — not an official recall." : "A product you purchased may be included in a new recall."}
         </Text>
       </View>
 

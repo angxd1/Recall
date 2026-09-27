@@ -11,10 +11,17 @@ const hostUri =
   "";
 
 function defaultApiBase(): string {
-  // Expo LAN host without port → API on 8787
-  const host = hostUri.split(":")[0];
-  if (host && host !== "localhost" && host !== "127.0.0.1") {
-    return `http://${host}:8787`;
+  // Expo may supply a complete http:// or exp:// URL, not just host:port.
+  if (typeof window !== "undefined" && window.location?.hostname) {
+    return `${window.location.protocol}//${window.location.hostname}:8787`;
+  }
+  if (hostUri) {
+    try {
+      const url = new URL(hostUri.includes("://") ? hostUri : `http://${hostUri}`);
+      return `http://${url.hostname}:8787`;
+    } catch {
+      // Fall back for SSR or an unavailable Expo development host.
+    }
   }
   return "http://localhost:8787";
 }
@@ -31,8 +38,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     },
   });
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`${res.status} ${path}: ${text}`);
+    const body = await res.json().catch(() => null) as { error?: string } | null;
+    throw new Error(body?.error ?? "The request could not be completed. Please try again.");
   }
   return res.json() as Promise<T>;
 }

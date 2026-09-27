@@ -5,9 +5,11 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import type { Product, ReceiptLineItem } from "@recalllens/shared";
 
@@ -50,7 +52,7 @@ export default function ReceiptScanScreen() {
     try {
       const photo = await cameraRef.current.takePictureAsync({
         base64: true,
-        quality: 0.6,
+        quality: 0.9,
       });
       if (!photo?.base64) throw new Error("Could not capture photo");
       const result = await api.extractReceipt({ imageBase64: photo.base64 });
@@ -82,6 +84,25 @@ export default function ReceiptScanScreen() {
     }
   };
 
+  const uploadReceipt = async () => {
+    if (busy) return;
+    setError(null);
+    try {
+      const selected = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"], base64: true, quality: 0.9,
+      });
+      if (selected.canceled) return;
+      const image = selected.assets[0];
+      if (!image.base64) throw new Error("Could not read the selected receipt image.");
+      setBusy(true);
+      applyExtract(await api.extractReceipt({ imageBase64: image.base64 }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const saveProducts = async () => {
     setPhase("saving");
     const now = new Date().toISOString();
@@ -94,12 +115,17 @@ export default function ReceiptScanScreen() {
       status: "clear",
       createdAt: now,
     }));
-    await db.insertProducts(products);
-    await refresh();
-    router.replace("/(tabs)/products");
+    try {
+      await db.insertProducts(products);
+      await refresh();
+      router.replace("/(tabs)/products");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not save products. Please try again.");
+      setPhase("review");
+    }
   };
 
-  if (!permission) {
+  if (!permission && phase === "camera") {
     return (
       <View style={styles.center}>
         <ActivityIndicator color={colors.brand} />
@@ -107,17 +133,22 @@ export default function ReceiptScanScreen() {
     );
   }
 
-  if (!permission.granted) {
+  if (!permission?.granted && phase === "camera") {
     return (
       <View style={styles.center}>
-        <Text style={styles.title}>Camera access needed</Text>
+        <Text style={styles.title}>Add a receipt</Text>
         <Text style={styles.body}>
           RecallLens photographs receipts to build your product inventory.
         </Text>
         <Pressable style={styles.primaryBtn} onPress={requestPermission}>
           <Text style={styles.primaryBtnText}>Allow camera</Text>
         </Pressable>
-        <Pressable style={styles.secondaryBtn} onPress={loadDemo}>
+        <Pressable style={styles.primaryBtn} onPress={uploadReceipt} disabled={busy}>
+          <Text style={styles.primaryBtnText}>{busy ? "Reading receipt…" : "Upload receipt photo"}</Text>
+        </Pressable>
+        {busy ? <ActivityIndicator color={colors.brand} /> : null}
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        <Pressable style={styles.secondaryBtn} onPress={loadDemo} disabled={busy}>
           <Text style={styles.secondaryBtnText}>Use demo receipt instead</Text>
         </Pressable>
       </View>
@@ -132,14 +163,22 @@ export default function ReceiptScanScreen() {
         </Text>
         <Text style={styles.body}>
           {retailer ? `${retailer} · ` : ""}
-          Confirm to add these to My Products.
+          Check and correct product names before adding them to My Products.
         </Text>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <View style={styles.itemList}>
           {items.map((item, idx) => (
-            <View key={`${item.name}-${idx}`} style={styles.itemRow}>
+            <View key={idx} style={styles.itemRow}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.itemName}>{item.name}</Text>
+                <TextInput
+                  accessibilityLabel={`Product ${idx + 1} name`}
+                  style={styles.itemName}
+                  value={item.name}
+                  editable={phase !== "saving"}
+                  onChangeText={(name) => setItems((current) => current.map((entry, i) =>
+                    i === idx ? { ...entry, name } : entry
+                  ))}
+                />
                 {item.brand ? (
                   <Text style={styles.itemBrand}>{item.brand}</Text>
                 ) : null}
@@ -153,7 +192,7 @@ export default function ReceiptScanScreen() {
         <Pressable
           style={styles.primaryBtn}
           onPress={saveProducts}
-          disabled={phase === "saving"}
+          disabled={phase === "saving" || items.some((item) => !item.name.trim())}
         >
           {phase === "saving" ? (
             <ActivityIndicator color="#fff" />
@@ -195,6 +234,9 @@ export default function ReceiptScanScreen() {
         </Pressable>
         <Pressable style={styles.demoLink} onPress={loadDemo} disabled={busy}>
           <Text style={styles.demoLinkText}>Use demo receipt</Text>
+        </Pressable>
+        <Pressable style={styles.demoLink} onPress={uploadReceipt} disabled={busy}>
+          <Text style={styles.demoLinkText}>Upload receipt photo</Text>
         </Pressable>
       </View>
     </View>

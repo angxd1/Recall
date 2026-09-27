@@ -7,18 +7,22 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "lint": "expo lint",
+    "web:export": "expo export --platform web",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@recalllens/shared": "*",
     "expo": "~57.0.25",
-    "expo-camera": "~17.0.8",
+    "expo-camera": "~57.0.5",
     "expo-constants": "~57.0.19",
     "expo-font": "~57.0.4",
+    "expo-image-picker": "~57.0.20",
     "expo-linking": "~57.0.11",
     "expo-router": "~57.0.23",
     "expo-splash-screen": "~57.0.9",
-    "expo-sqlite": "~16.0.8",
+    "expo-sqlite": "~57.0.3",
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.3",
     "expo-web-browser": "~57.0.3",
@@ -33,6 +37,9 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
-    "typescript": "~5.9.2"
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~57.0.2",
+    "fake-indexeddb": "^6.2.5",
+    "typescript": "~6.0.3"
   }
 }

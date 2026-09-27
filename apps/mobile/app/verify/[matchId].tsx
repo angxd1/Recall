@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -40,15 +40,22 @@ export default function VerifyScreen() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    const m = await db.getMatch(String(matchId));
-    setMatch(m);
-    if (m) setRecall(await db.getRecall(m.recallId));
-  }, [matchId]);
+  const [loadedId, setLoadedId] = useState<string | null>(null);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    let active = true;
+    void db.getMatch(String(matchId)).then(async (m) => {
+      const foundRecall = m ? await db.getRecall(m.recallId) : null;
+      if (!active) return;
+      setMatch(m);
+      setRecall(foundRecall);
+    }).catch(() => {
+      if (active) setMatch(null);
+    }).finally(() => {
+      if (active) setLoadedId(String(matchId));
+    });
+    return () => { active = false; };
+  }, [matchId]);
 
   const applyResult = async (result: {
     confirmed: boolean;
@@ -109,12 +116,16 @@ export default function VerifyScreen() {
     }
   };
 
-  if (!match || !recall) {
+  if (loadedId !== String(matchId)) {
     return (
       <View style={styles.center}>
         <ActivityIndicator color={colors.brand} />
       </View>
     );
+  }
+
+  if (!match || !recall) {
+    return <View style={styles.center}><Text>Could not load this match. Return to your products and try again.</Text></View>;
   }
 
   const range = recall.identifiers.lotRanges?.[0];

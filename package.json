@@ -7,10 +7,17 @@
   ],
   "scripts": {
     "postinstall": "npm run shared:build",
-    "mobile": "npm run start --workspace=@recalllens/mobile",
+    "mobile": "npm run start --workspace=@recalllens/mobile --",
     "api": "npm run dev --workspace=@recalllens/api",
     "shared:build": "npm run build --workspace=@recalllens/shared",
-    "test:match": "npx tsx scripts/smoke-match.ts"
+    "test:match": "npx tsx scripts/smoke-match.ts",
+    "test:receipt": "npx tsx scripts/smoke-receipt.ts",
+    "test:storage": "npx tsx scripts/smoke-storage.ts",
+    "test:api": "tsx --test apps/api/src/services/receiptExtract.test.ts",
+    "test": "npm run test:match && npm run test:storage && npm run test:api",
+    "typecheck": "npm run shared:build && npm run build --workspace=@recalllens/api && npm run typecheck --workspace=@recalllens/mobile",
+    "lint": "npm run lint --workspace=@recalllens/mobile",
+    "build:web": "npm run web:export --workspace=@recalllens/mobile"
   },
   "engines": {
     "node": ">=20"
